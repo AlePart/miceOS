@@ -168,6 +168,12 @@ void terminal_writestring(const char* data)
 
 }
 
+void terminal_change_color(enum vga_color fg, enum vga_color bg) 
+{
+
+	terminal_color = vga_entry_color(fg, bg);
+
+}
 void terminal_newline()
 {
 	terminal_row++;
@@ -184,13 +190,14 @@ void kernel_main(void)
 	terminal_writestring("Wow a new Line\n");
   terminal_writestring("Wow a new Line without call terminal_newline() function\n");
   terminal_writestring("LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LINE\n");
-  for (int i =0; i< 23; i++)
+  for (int i =0; i< 20; i++)
   {
     char n[3];
     itoa(i,n,10);
     terminal_writestring(n);
     terminal_newline();
   } 
+  terminal_change_color(VGA_COLOR_RED,VGA_COLOR_WHITE);
   terminal_writestring("last line");
 	
 }
