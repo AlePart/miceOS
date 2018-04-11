@@ -87,12 +87,19 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
  
 void terminal_putchar(char c) 
 {
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
-	}
+  if('\n'==c)
+  {
+    terminal_newline();
+  }
+  else
+  {
+	  terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+	  if (++terminal_column == VGA_WIDTH) {
+		  terminal_column = 0;
+		  if (++terminal_row == VGA_HEIGHT)
+			  terminal_row = 0;
+	  }
+  }
 }
  
 void terminal_write(const char* data, size_t size) 
@@ -119,6 +126,7 @@ void kernel_main(void)
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!");
 	terminal_newline();
-	terminal_writestring("Wow a new Line");
+	terminal_writestring("Wow a new Line\n");
+  terminal_writestring("Wow a new Line without call terminal_newline() function");
 	
 }
