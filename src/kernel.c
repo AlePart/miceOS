@@ -113,16 +113,39 @@ void terminal_setcolor(uint8_t color)
 {
 	terminal_color = color;
 }
+
+void memcpy(void* dest, void* src, size_t size)
+{
+
+}
+  asm("mov %eax, %esi"); 
+  asm("mov edx, edi ");
+
+  asm("cld"); 
+  mov %esi, src ; src 
+mov edi, dst ; dst 
+mov ecx, ln ; ln 
+
+shr ecx, 2 
+rep movsd 
+
+mov ecx, ln ; ln 
+and ecx, 3 
+rep movsb 
+
+mov edi, edx ; restore EDI & ESI 
+mov esi, eax
 void terminal_scroll() 
 {
   // to be optimize
-  for (size_t y = 0; y < VGA_HEIGHT-1; y++) {
+  /*for (size_t y = 0; y < VGA_HEIGHT-1; y++) {
     for (size_t x = 0; x < VGA_WIDTH; x++) {
       const size_t index = y * VGA_WIDTH + x;
       const size_t old_index = (y+1) * VGA_WIDTH + x;
       terminal_buffer[index] = terminal_buffer[old_index];
 	  }
-  }
+  }*/
+  memcpy((void*)terminal_buffer,(void*)(terminal_buffer + VGA_WIDTH), VGA_WIDTH*(VGA_HEIGHT-1) );
   terminal_row--;
 } 
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) 
@@ -217,7 +240,7 @@ void kernel_main(void)
 	terminal_writestring("Wow a new Line\n");
   terminal_writestring("Wow a new Line without call terminal_newline() function\n");
   terminal_writestring("LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LINE\n");
-  for (int i =0; i< 20; i++)
+  for (int i =0; i< 25; i++)
   {
     char n[3];
     itoa(i,n,10);
