@@ -105,12 +105,20 @@ void terminal_writestring(const char* data)
 {
 	terminal_write(data, strlen(data));
 }
- 
+
+void terminal_newline()
+{
+	terminal_row++;
+	terminal_column=0;
+}
 void kernel_main(void) 
 {
 	/* Initialize terminal interface */
 	terminal_initialize();
  
 	/* Newline support is left as an exercise. */
-	terminal_writestring("Hello, kernel World!\n");
+	terminal_writestring("Hello, kernel World!");
+	terminal_newline();
+	terminal_writestring("Wow a new Line");
+	
 }
