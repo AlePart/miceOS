@@ -113,6 +113,7 @@ void terminal_setcolor(uint8_t color)
 }
 void terminal_scroll() 
 {
+  // to be optimize
   for (size_t y = 0; y < VGA_HEIGHT-1; y++) {
     for (size_t x = 0; x < VGA_WIDTH; x++) {
       const size_t index = y * VGA_WIDTH + x;
