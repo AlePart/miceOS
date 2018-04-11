@@ -206,7 +206,7 @@ char getScancode()
     return inb(0x60);
 }
 char getchar() {
-    return getScancode();
+    return getScancode(); // must be pasrsed with scancode
 }
 void kernel_main(void) 
 {
