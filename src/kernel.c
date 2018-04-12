@@ -86,11 +86,7 @@ char * itoa( int value, char * str, int base )
 }
 void memcpy_i386(void* dest, void* src, size_t size)
 {
-
-    int32_t counter = 0;
-    int32_t tmp;
     __asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (size)  );
-
 }
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
