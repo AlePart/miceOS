@@ -3,17 +3,18 @@
 #ifndef ELF_DATA_TYPES_H
 #define ELF_DATA_TYPES_H
 
-# define ELF_NIDENT	16
+#define ELF_NIDENT	16
 
-# define EM_386		(3)  // x86 Machine Type
-# define EV_CURRENT	(1)  // ELF Current Version
-# define ELFMAG0	0x7F // e_ident[EI_MAG0]
-# define ELFMAG1	'E'  // e_ident[EI_MAG1]
-# define ELFMAG2	'L'  // e_ident[EI_MAG2]
-# define ELFMAG3	'F'  // e_ident[EI_MAG3]
+#define EM_386		(3)  // x86 Machine Type
+#define EV_CURRENT	(1)  // ELF Current Version
+#define ELFMAG0	0x7F // e_ident[EI_MAG0]
+#define ELFMAG1	'E'  // e_ident[EI_MAG1]
+#define ELFMAG2	'L'  // e_ident[EI_MAG2]
+#define ELFMAG3	'F'  // e_ident[EI_MAG3]
  
-# define ELFDATA2LSB	(1)  // Little Endian
-# define ELFCLASS32	(1)  // 32-bit Architecture
+#define ELFDATA2LSB	(1)  // Little Endian
+#define ELFCLASS32	(1)  // 32-bit Architecture
+#define ELFCLASS64	(2)  // 64-bit Architecture
 
 typedef uint16_t Elf32_Half;	// Unsigned half int
 typedef uint32_t Elf32_Off;	// Unsigned offset

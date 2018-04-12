@@ -31,11 +31,11 @@ bool elf_check_supported(Elf32_Ehdr *hdr) {
 		ERROR("Unsupported ELF File Class.\n");
 		return false;
 	}
-	if(hdr->e_ident[EI_DATA] != ELFDATA2LSB) {
-		ERROR("Unsupported ELF File byte order.\n");
+	if(hdr->e_ident[EI_DATA] != ELFDATA2LSB) { //TODO control must be passed from arch
+		ERROR("Unsupported ELF File byte order.\n");  
 		return false;
 	}
-	if(hdr->e_machine != EM_386) {
+	if(hdr->e_machine != EM_386) { //TODO control must be passed from arch
 		ERROR("Unsupported ELF File target.\n");
 		return false;
 	}
@@ -48,4 +48,9 @@ bool elf_check_supported(Elf32_Ehdr *hdr) {
 		return false;
 	}
 	return true;
+}
+
+
+void ERROR(uint8_t*)
+{
 }
