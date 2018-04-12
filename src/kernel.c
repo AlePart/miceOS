@@ -84,7 +84,14 @@ char * itoa( int value, char * str, int base )
     }
     return rc;
 }
+void memcpy_i386(void* dest, void* src, size_t size)
+{
 
+    int32_t counter = 0;
+    int32_t tmp;
+    __asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (size)  );
+
+}
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
  
@@ -114,14 +121,6 @@ void terminal_setcolor(uint8_t color)
 	terminal_color = color;
 }
 
-void memcpy_i386(void* dest, void* src, size_t size)
-{
-
-    int32_t counter = 0;
-    int32_t tmp;
-    __asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (size)  );
-
-}
 
 void terminal_scroll() 
 {
