@@ -223,7 +223,11 @@ void kernel_main(void)
 	terminal_writestring("Wow a new Line\n");
   terminal_writestring("Wow a new Line without call terminal_newline() function\n");
   terminal_writestring("LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LINE\n");
+<<<<<<< HEAD
   for (int i =0; i< 19; i++)
+=======
+  for (int i =0; i< 20; i++)
+>>>>>>> terminal_color
   {
     char n[3];
     itoa(i,n,10);
@@ -231,8 +235,11 @@ void kernel_main(void)
     terminal_newline();
   } 
   terminal_change_color(VGA_COLOR_RED,VGA_COLOR_WHITE);
+<<<<<<< HEAD
   terminal_writestring(getchar());
   terminal_newline();
+=======
+>>>>>>> terminal_color
   terminal_writestring("last line");
 
 }
