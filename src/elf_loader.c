@@ -16,7 +16,7 @@ static inline void *elf_load_rel(Elf32_Ehdr *hdr) {
 		return NULL;
 	}
 	// TODO : Parse the program header (if present)
-	return (void *)NULL;//hdr->e_entry; TODO new value
+	return (void *)hdr->e_entry;
 }
  
 void *elf_load_file(void *file) {
