@@ -60,7 +60,6 @@ ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
   }
   current_el->type_mask &= ~FREE_PAGE; //reset flag
   set_page_properties(current_el,owner);
-  phys_addr
   return current_el;
 }
 
