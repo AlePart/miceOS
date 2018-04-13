@@ -9,7 +9,7 @@ typedef struct
 }ALLOCATOR_HEADER;
 typedef struct
 {
-  void* base_dictionary;
+  void* base_directory;
   uint32_t type_mask; 
   ALLOCATOR_ELEMENT* prev;
   ALLOCATOR_ELEMENT* next;
@@ -28,16 +28,16 @@ bool basic_allocator_init(uint32_t* base_address, uint32_t mem_size, PAGE_SIZE p
   uint32_t availble_pages= mem_size>>(uint32_t)pg_size;
   uint32_t allocator_element_needed= (mem_size >>(uint32_t)pg_size);
   uint32_t allocator_mem_reserve= allocator_element_needed*sizeof(ALLOCATOR_ELEMENT) + sizeof(ALLOCATOR_HEADER);
-  void* base_dictionary=allocator_mem_reserve + base_address;
+  void* base_directory=allocator_mem_reserve + base_address;
   allocator_hdr_addr = base_address;
   allocator_hdr_addr.sz=pg_size;
   uint32_t counter = 0;
   ALLOCATOR_ELEMENT* current_el= (ALLOCATOR_ELEMENT*)(allocator_hdr_addr + sizeof(ALLOCATOR_HEADER));
   do
   {
-       current_el->base_dictionary=base_dictionary;
+       current_el->base_directory=base_directory;
        current_el->type_mask=FREE_PAGE;
-       base_dictionary +=(1<<allocator_hdr_addr.sz);
+       base_directory +=(1<<allocator_hdr_addr.sz);
  
   }while(counter++ < allocator_reserved_pages);
   return true;
@@ -57,9 +57,9 @@ ALLOCATOR_ELEMENT* allocate_page()
 
 void free_page(void* address)
 {
-  void* dictionary = (void*)(uint32_t address & (1<<allocator_hdr_addr->sz)); 
+  void* directory = (void*)(uint32_t address & (1<<allocator_hdr_addr->sz)); 
   ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
-  while( dictionary != current_el->base_dictionary )
+  while( directory != current_el->base_directory )
   {
     current_el++;
   }
@@ -83,7 +83,7 @@ void* allocate_area(size_t size)
     ALLOCATOR_ELEMENT* current_el=allocate_page();
     if(NULL != prev_el)
     {
-      elem_to_ret = current_el->base_dictionary;
+      elem_to_ret = current_el->base_directory;
       prev_el->next=current_el;
     }
     current_el->prev = prev_el;
