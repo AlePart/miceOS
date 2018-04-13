@@ -7,13 +7,7 @@ typedef struct
   PAGE_SIZE sz;
   uint32_t max_pages;
 }ALLOCATOR_HEADER;
-typedef struct
-{
-  void* base_directory;
-  uint32_t type_mask; 
-  ALLOCATOR_ELEMENT* prev;
-  ALLOCATOR_ELEMENT* next;
-}ALLOCATOR_ELEMENT;
+
 
 
 
@@ -63,7 +57,7 @@ ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
   return current_el;
 }
 
-ALLOCATOR_ELEMENT* search(void* address) 
+ALLOCATOR_ELEMENT* search_page(void* address) 
 {
   void* directory = (void*)(uint32_t address & (1<<allocator_hdr_addr->sz)); 
   ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
@@ -102,7 +96,7 @@ ALLOCATOR_ELEMENT* allocate_pages(size_t size, PAGE_OWNER owner)
 
 ALLOCATOR_ELEMENT* append_pages(void* address, size_t size)
 {
-  ALLOCATOR_ELEMENT* current_el= search(address);
+  ALLOCATOR_ELEMENT* current_el= search_page(address);
   if(0x00000000 == (current_el->type_mask & FREE_PAGE) ) // must be non free the page, else ret NULL
   {
     return allocate_pages(size);
@@ -129,7 +123,7 @@ void* append_area(void* address, size_t size, PAGE_OWNER owner)
 
 void free_area(void* address)
 {
-  ALLOCATOR_ELEMENT* current_el= search(address);
+  ALLOCATOR_ELEMENT* current_el= search_page(address);
   while(NULL != current_el->prev) // going to first element
   {
     current_el=current_el->prev;
