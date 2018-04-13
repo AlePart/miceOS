@@ -1,8 +1,6 @@
 #include "basic_allocator.h"
 
-#define FREE_PAGE (1<<0)
-#define KERNEL_PAGE (1<<1)
-#define USER_PAGE (1<<2)
+
 
 typedef struct
 {
