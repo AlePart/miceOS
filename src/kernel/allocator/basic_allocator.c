@@ -107,7 +107,7 @@ ALLOCATOR_ELEMENT* append_pages(void* address, size_t size)
   }
 }
 
-void set_page_properties(ALLOCATOR_ELEMENT* el, PAGE_OWNER owner)
+void set_page_properties(ALLOCATOR_ELEMENT* el, PAGE_OWNER owner, PAGE_TYPE type)
 {
   
 }
