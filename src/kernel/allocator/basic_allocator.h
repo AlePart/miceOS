@@ -10,7 +10,12 @@ typedef enum {
   OWNER_KERNEL,
   OWNER_USER
 }PAGE_OWNER;
-
+typedef enum
+{
+  PAGE_STACK,
+  PAGE_DATA,
+  PAGE_EXECUTABLE
+}PAGE_TYPE;
 typedef enum {
   PAGE_4K =12,
   PAGE_2k =11,
