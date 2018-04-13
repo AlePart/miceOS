@@ -3,6 +3,7 @@
 # include <stdint.h>
 
 bool basic_allocator_init(uint32_t base_address);
-void* allocate_page();
+void* allocate_area(size_t size); //retuns the first base_dictionary
+void free_page(void* address);
 
 #endif

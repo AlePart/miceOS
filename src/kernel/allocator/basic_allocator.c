@@ -43,7 +43,7 @@ bool basic_allocator_init(uint32_t* base_address, uint32_t mem_size, PAGE_SIZE p
   return true;
 }
 
-void* allocate_page()
+ALLOCATOR_ELEMENT* allocate_page()
 {
   ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
   while( 0x00000000 == current_el->type_mask & FREE_PAGE)
@@ -51,6 +51,45 @@ void* allocate_page()
     current_el++; //next element;
   }
   current_el->type_mask ^= (uint32_t)FREE_PAGE; //set flag
-  return current_el->base_dictionary;
+  phys_addr
+  return current_el;
+}
+
+void free_page(void* address)
+{
+  void* dictionary = (void*)(uint32_t address & (1<<allocator_hdr_addr->sz)); 
+  ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
+  while( dictionary != current_el->base_dictionary )
+  {
+    current_el++;
+  }
+  current_el->type_mask = FREE_PAGE;
+  current_el->prev=NULL;
+  current_el->next=NULL;
+}
+
+void* allocate_area(size_t size)
+{
+  ALLOCATOR_ELEMENT* prev_el=NULL;
+  void* elem_to_ret = NULL;
+  uint32_t pages= size/(1<<allocator_hdr_addr->sz); // how many pages?;
+  if( size%(1<<allocator_hdr_addr->sz)) //residual page
+  {
+    pages++;
+  }
+
+  do
+  {
+    ALLOCATOR_ELEMENT* current_el=allocate_page();
+    if(NULL != prev_el)
+    {
+      elem_to_ret = current_el->base_dictionary;
+      prev_el->next=current_el;
+    }
+    current_el->prev = prev_el;
+    prev_el = current_el;
+    pages--;
+  }while(pages!=0)
+  return elem_to_ret;
 }
 
