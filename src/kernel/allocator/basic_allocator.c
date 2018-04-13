@@ -9,17 +9,17 @@ typedef struct
 }ALLOCATOR_HEADER;
 
 
-
+#define KERNEL_MEMORY_RESERVATION 0x1000000
 
 ALLOCATOR_HEADER* allocator_hdr_addr;
 
-bool basic_allocator_init(uint32_t* base_address, uint32_t mem_size, PAGE_SIZE pg_size)
+bool basic_allocator_init(uint32_t mem_size, PAGE_SIZE pg_size)
 {
   uint32_t availble_pages= mem_size>>(uint32_t)pg_size;
   uint32_t allocator_element_needed= (mem_size >>(uint32_t)pg_size);
   uint32_t allocator_mem_reserve= allocator_element_needed*sizeof(ALLOCATOR_ELEMENT) + sizeof(ALLOCATOR_HEADER);
-  void* base_directory=allocator_mem_reserve + base_address;
-  allocator_hdr_addr = base_address;
+  void* base_directory=allocator_mem_reserve + KERNEL_MEMORY_RESERVATION;
+  allocator_hdr_addr = KERNEL_MEMORY_RESERVATION;
   allocator_hdr_addr.sz=pg_size;
   uint32_t counter = 0;
   ALLOCATOR_ELEMENT* current_el= (ALLOCATOR_ELEMENT*)(allocator_hdr_addr + sizeof(ALLOCATOR_HEADER));
