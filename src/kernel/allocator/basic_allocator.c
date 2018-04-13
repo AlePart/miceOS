@@ -1,6 +1,8 @@
 #include "basic_allocator.h"
 
-#define FREE_PAGE 1<<0;
+#define FREE_PAGE (1<<0)
+#define KERNEL_PAGE (1<<1)
+#define USER_PAGE (1<<2)
 
 typedef struct
 {
@@ -39,14 +41,27 @@ bool basic_allocator_init(uint32_t* base_address, uint32_t mem_size, PAGE_SIZE p
   return true;
 }
 
-ALLOCATOR_ELEMENT* allocate_page()
+void set_page_properties(ALLOCATOR_ELEMENT* current_el, PAGE_OWNER owner) //maybe inline is better
+{
+  if(OWNER_KERNEL ==owner )
+  {
+    current_el->type_mask |= KERNEL_PAGE;
+  }
+  else if(OWNER_USER == owner)
+  {
+    current_el->type_mask |= USER_PAGE
+  }
+}
+
+ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
 {
   ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
-  while( 0x00000000 == current_el->type_mask & FREE_PAGE)
+  while( 0x00000000 == current_el->type_mask & FREE_PAGE) //page is free?
   {
     current_el++; //next element;
   }
-  current_el->type_mask ^= (uint32_t)FREE_PAGE; //set flag
+  current_el->type_mask &= ~FREE_PAGE; //reset flag
+  set_page_properties(current_el,owner);
   phys_addr
   return current_el;
 }
@@ -63,7 +78,7 @@ ALLOCATOR_ELEMENT* search(void* address)
 }
 
 
-ALLOCATOR_ELEMENT* allocate_pages(size_t size)
+ALLOCATOR_ELEMENT* allocate_pages(size_t size, PAGE_OWNER owner)
 {
   ALLOCATOR_ELEMENT* prev_el=NULL;
   void* elem_to_ret = NULL;
@@ -74,7 +89,7 @@ ALLOCATOR_ELEMENT* allocate_pages(size_t size)
   }
   do
   {
-    ALLOCATOR_ELEMENT* current_el=allocate_page();
+    ALLOCATOR_ELEMENT* current_el=allocate_page(owner);
     if(NULL != prev_el)
     {
       elem_to_ret = current_el->base_directory;
@@ -101,13 +116,18 @@ ALLOCATOR_ELEMENT* append_pages(void* address, size_t size)
   }
 }
 
-void* allocate_area(size_t size)
+void set_page_properties(ALLOCATOR_ELEMENT* el, PAGE_OWNER owner)
 {
-  return allocate_pages(size)->base_directory;
+  
 }
-void* append_area(void* address, size_t size)
+void* allocate_area(size_t size, PAGE_OWNER owner)
 {
-  return append_pages(address,size)->base_directory;
+  return allocate_pages(size, owner)->base_directory;
+}
+void* append_area(void* address, size_t size, PAGE_OWNER owner)
+{
+  
+  return allocate_pages(address, size , owner)->base_directory;
 }
 
 void free_area(void* address)
@@ -120,7 +140,7 @@ void free_area(void* address)
   ALLOCATOR_ELEMENT* prev_el;
   while(NULL != current_el->next)
   {
-    current_el->type_mask &= ~FREE_PAGE; 
+    current_el->type_mask = FREE_PAGE; 
     if( NULL!= current_el->prev) //check if prev is not null to null it and save the prev to delete the next pointer
     {
       prev_el = current_el->prev;
