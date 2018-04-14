@@ -1,5 +1,8 @@
 #!/bin/bash
 
+USER_UID=`id -u`
+USER_GID=`id -g`
+
 xhost +local:
 
 mkdir -p /tmp/miceos-docker/share
@@ -14,6 +17,8 @@ docker run \
 -e XDG_RUNTIME_DIR=/tmp/miceos-docker/xdg \
 --device /dev/dri \
 --name miceos-docker-instance \
+--cap-add=SYS_PTRACE \
+--security-opt seccomp=unconfined \
 -v /dev/shm:/dev/shm \
 -v /tmp/miceos-docker/share:/mnt/host \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -21,9 +26,8 @@ docker run \
 -v `pwd`:/home/developer/miceOS \
 filcuc/miceos-docker \
 /bin/bash -c "\
-cd /home/developer/miceOS/;\
-cp .*.user CMakeLists.txt.user;\
-/opt/qtcreator/bin/qtcreator /home/developer/miceOS/CMakeLists.txt"
+chuid.sh developer $USER_UID $USER_GID /home;\
+runuser -l developer -c 'cp /home/developer/miceOS/.docker.CMakeLists.txt.user /home/developer/miceOS/CMakeLists.txt.user';\
+runuser -l developer -c 'export DISPLAY=$DISPLAY && /opt/qtcreator/bin/qtcreator /home/developer/miceOS/CMakeLists.txt'"
 
 xhost -local:
-
