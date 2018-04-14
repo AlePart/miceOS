@@ -3,6 +3,8 @@
 USER_UID=`id -u`
 USER_GID=`id -g`
 
+docker rm miceos-docker-instance
+
 xhost +local:
 
 mkdir -p /tmp/miceos-docker/share
@@ -15,7 +17,7 @@ docker run \
 --net=host \
 -e DISPLAY=$DISPLAY \
 -e XDG_RUNTIME_DIR=/tmp/miceos-docker/xdg \
---device /dev/dri \
+--privileged \
 --name miceos-docker-instance \
 --cap-add=SYS_PTRACE \
 --security-opt seccomp=unconfined \
