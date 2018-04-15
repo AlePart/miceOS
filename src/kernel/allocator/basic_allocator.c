@@ -20,14 +20,15 @@ bool basic_allocator_init(uint32_t mem_size, PAGE_SIZE pg_size)
   uint32_t allocator_mem_reserve= allocator_element_needed*sizeof(ALLOCATOR_ELEMENT) + sizeof(ALLOCATOR_HEADER);
   void* base_directory=allocator_mem_reserve + KERNEL_MEMORY_RESERVATION;
   allocator_hdr_addr = KERNEL_MEMORY_RESERVATION;
-  allocator_hdr_addr.sz=pg_size;
+  allocator_hdr_addr->sz=pg_size;
   uint32_t counter = 0;
+  uint32_t allocator_reserved_pages =  (allocator_mem_reserve >> allocator_hdr_addr->sz); //how many pages are needed for allocator depending on pgsize?
   ALLOCATOR_ELEMENT* current_el= (ALLOCATOR_ELEMENT*)(allocator_hdr_addr + sizeof(ALLOCATOR_HEADER));
   do
   {
        current_el->base_directory=base_directory;
        current_el->type_mask=FREE_PAGE;
-       base_directory +=(1<<allocator_hdr_addr.sz);
+       base_directory +=(1<<allocator_hdr_addr->sz);
  
   }while(counter++ < allocator_reserved_pages);
   return true;
@@ -41,7 +42,7 @@ void set_page_properties(ALLOCATOR_ELEMENT* current_el, PAGE_OWNER owner) //mayb
   }
   else if(OWNER_USER == owner)
   {
-    current_el->type_mask |= USER_PAGE
+    current_el->type_mask |= USER_PAGE;
   }
 }
 
@@ -59,7 +60,7 @@ ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
 
 ALLOCATOR_ELEMENT* search_page(void* address) 
 {
-  void* directory = (void*)(uint32_t address & (1<<allocator_hdr_addr->sz)); 
+  uint32_t* directory = (uint32_t*)(((uint32_t)address) & (1<<allocator_hdr_addr->sz));
   ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
 
   while( directory != current_el->base_directory ) //search for element with given dir
@@ -89,17 +90,17 @@ ALLOCATOR_ELEMENT* allocate_pages(size_t size, PAGE_OWNER owner)
     current_el->prev = prev_el;
     prev_el = current_el;
     pages--;
-  }while(pages!=0)
+  }while(pages!=0);
   return elem_to_ret;
 }
 
 
-ALLOCATOR_ELEMENT* append_pages(void* address, size_t size)
+ALLOCATOR_ELEMENT* append_pages(void* address, size_t size, PAGE_OWNER owner)
 {
   ALLOCATOR_ELEMENT* current_el= search_page(address);
   if(0x00000000 == (current_el->type_mask & FREE_PAGE) ) // must be non free the page, else ret NULL
   {
-    return allocate_pages(size);
+    return allocate_pages(size,owner);
   }
   else
   {
@@ -107,10 +108,6 @@ ALLOCATOR_ELEMENT* append_pages(void* address, size_t size)
   }
 }
 
-void set_page_properties(ALLOCATOR_ELEMENT* el, PAGE_OWNER owner, PAGE_TYPE type)
-{
-  
-}
 void* allocate_area(size_t size, PAGE_OWNER owner)
 {
   return allocate_pages(size, owner)->base_directory;
@@ -118,7 +115,7 @@ void* allocate_area(size_t size, PAGE_OWNER owner)
 void* append_area(void* address, size_t size, PAGE_OWNER owner)
 {
   
-  return allocate_pages(address, size , owner)->base_directory;
+  return allocate_pages(size , owner)->base_directory;
 }
 
 void free_area(void* address)
