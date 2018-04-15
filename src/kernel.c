@@ -210,28 +210,13 @@ char getScancode()
     return inb(0x60);
 }
 char getchar() {
+
     return getScancode(); // must be pasrsed with scancode
 }
 void kernel_main(void) 
 {
     /* Initialize terminal interface */
     terminal_initialize();
-    terminal_writestring("Hello, kernel World!");
-    terminal_newline();
-    terminal_writestring("Wow a new Line\n");
-    terminal_writestring("Wow a new Line without call terminal_newline() function\n");
-    terminal_writestring("LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LONG LINE\n");
-    for (int i =0; i< 20; i++)
-
-    {
-        char n[3];
-        itoa(i,n,10);
-        terminal_writestring(n);
-        terminal_newline();
-    }
-    terminal_change_color(VGA_COLOR_RED,VGA_COLOR_WHITE);
-    terminal_writestring(getchar());
-    terminal_newline();
-    terminal_writestring("last line");
+    terminal_writestring("Hello, kernel World!\n");
 
 }
