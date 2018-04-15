@@ -29,7 +29,6 @@ bool basic_allocator_init(uint32_t mem_size, PAGE_SIZE pg_size)
        current_el->base_directory=base_directory;
        current_el->type_mask=FREE_PAGE;
        base_directory +=(1<<allocator_hdr_addr->sz);
- 
   }while(counter++ < allocator_reserved_pages);
   return true;
 }

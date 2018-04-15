@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
+#include "kernel/allocator/basic_allocator.h"
 
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -169,9 +169,7 @@ void terminal_write(const char* data, size_t size)
 
 void terminal_writestring(const char* data) 
 {
-
     terminal_write(data, strlen(data));
-
 }
 
 void terminal_change_color(enum vga_color fg, enum vga_color bg) 
@@ -218,5 +216,9 @@ void kernel_main(void)
     /* Initialize terminal interface */
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
+    basic_allocator_init(1024*1024*1024,PAGE_1K);
+#ifdef DEBUG
+    terminal_writestring("DEBUG");
+#endif
 
 }
