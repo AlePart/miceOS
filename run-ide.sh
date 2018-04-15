@@ -20,7 +20,6 @@ docker run \
 --privileged \
 --name miceos-docker-instance \
 --cap-add=SYS_PTRACE \
---security-opt seccomp=unconfined \
 -v /dev/shm:/dev/shm \
 -v /tmp/miceos-docker/share:/mnt/host \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
