@@ -7,6 +7,8 @@
 #define FREE_PAGE (1<<0)
 #define KERNEL_PAGE (1<<1)
 #define USER_PAGE (1<<2)
+#define STACK_PAGE(1<<3)
+#define HEAP_PAGE(1<<4)
 
 typedef enum {
   OWNER_KERNEL,
@@ -16,7 +18,9 @@ typedef enum
 {
   PAGE_STACK,
   PAGE_DATA,
-  PAGE_EXECUTABLE
+  PAGE_EXECUTABLE,
+  PAGE_STACK,
+  PAGE_HEAP
 }PAGE_TYPE;
 typedef enum {
   PAGE_4K =12,
