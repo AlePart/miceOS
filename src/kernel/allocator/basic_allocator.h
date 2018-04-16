@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-using Word = uint64_t;
+using Word = uint32_t;
 const size_t WORD_SIZE = sizeof(Word);
 
 class Segment;

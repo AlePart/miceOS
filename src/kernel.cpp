@@ -43,6 +43,8 @@ extern "C" {
 
 void kernel_main(void) 
 {
+    BasicAllocator::initialize((void*)0x1000000, 1024 * 1024);
+
     Terminal::initialize();
 
     /* Initialize terminal interface */
