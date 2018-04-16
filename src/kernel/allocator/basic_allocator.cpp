@@ -1,54 +1,51 @@
 #include "basic_allocator.h"
 
-#define WORD size_t
-#define WORD_SIZE sizeof(size_t)
-
 namespace {
 
 void* memory_start;
 Segment* free_segment_list;
 Segment* used_segment_list;
 
-void pop_from_list(Segment*& head, Segment* segment)
+}
+
+void SegmentList::pop(Segment *&head, Segment *segment)
 {
-    if (segment->previous) {
-        segment->previous->next = segment->next;
+    if (segment->previous()) {
+        segment->previous()->set_next(segment->next());
     }
-    else if (segment->next) {
-        segment->next->previous = nullptr;
-        head = segment->next;
+    else if (segment->next()) {
+        segment->next()->set_previous(nullptr);
+        head = segment->next();
     } else {
         head = nullptr;
     }
 
-    segment->previous = nullptr;
-    segment->next = nullptr;
+    segment->set_previous(nullptr);
+    segment->set_previous(nullptr);
 }
 
-void push_to_list(Segment*& head, Segment* segment)
+void SegmentList::push(Segment *&head, Segment *segment)
 {
     if (head) {
-        head->next = segment;
-        segment->previous = head;
-        segment->next = nullptr;
+        head->set_next(segment);
+        segment->set_previous(head);
+        segment->set_next(nullptr);
     } else {
         head = segment;
-        segment->previous = nullptr;
-        segment->next = nullptr;
+        segment->set_previous(nullptr);
+        segment->set_next(nullptr);
     }
 }
 
-size_t count_list(Segment* head)
+size_t SegmentList::size(Segment* head)
 {
     size_t result = 0;
     Segment* segment = head;
     while (segment) {
         ++result;
-        segment = segment->next;
+        segment = segment->next();
     }
     return result;
-}
-
 }
 
 void BasicAllocator::initialize(void* start, size_t num_bytes) {
@@ -57,34 +54,34 @@ void BasicAllocator::initialize(void* start, size_t num_bytes) {
     ::free_segment_list = reinterpret_cast<Segment*>(::memory_start);
     ::used_segment_list = nullptr;
 
-    ::free_segment_list->size = num_bytes - 3 * sizeof(size_t); // Size
-    ::free_segment_list->previous = 0; // Previous
-    ::free_segment_list->next = 0; // Next
+    ::free_segment_list->set_size(num_bytes - 3 * WORD_SIZE); // Size
+    ::free_segment_list->set_previous(nullptr); // Previous
+    ::free_segment_list->set_next(nullptr); // Next
 }
 
 void* BasicAllocator::alloc(size_t bytes_to_alloc) {
-    bytes_to_alloc = ((bytes_to_alloc/sizeof(size_t)) + 1) * sizeof(size_t);
+    bytes_to_alloc = ((bytes_to_alloc / WORD_SIZE) + 1) * WORD_SIZE;
 
     Segment* current_segment = free_segment_list;
 
     while (current_segment) {
-        if (current_segment->size < bytes_to_alloc) {
-            current_segment = current_segment->next;
+        if (current_segment->size() < bytes_to_alloc) {
+            current_segment = current_segment->next();
             continue;
         }
 
-        if (current_segment->size > bytes_to_alloc) {
-            Segment* remainder = current_segment + 3 + (bytes_to_alloc / sizeof(size_t));
-            remainder->size = current_segment->size - bytes_to_alloc - 3 * sizeof(size_t);
-            remainder->previous = current_segment;
-            remainder->next = current_segment->next;
+        if (current_segment->size() > bytes_to_alloc) {
+            Segment* remainder = current_segment + 3 + (bytes_to_alloc / WORD_SIZE);
+            remainder->set_size(current_segment->size() - bytes_to_alloc - 3 * WORD_SIZE);
+            remainder->set_previous(current_segment);
+            remainder->set_next(current_segment->next());
 
-            current_segment->size = bytes_to_alloc;
-            current_segment->next = remainder;
+            current_segment->set_size(bytes_to_alloc);
+            current_segment->set_next(remainder);
         }
 
-        ::pop_from_list(::free_segment_list, current_segment);
-        ::push_to_list(::used_segment_list, current_segment);
+        SegmentList::pop(::free_segment_list, current_segment);
+        SegmentList::push(::used_segment_list, current_segment);
 
         return current_segment + 3;
     }
@@ -96,33 +93,55 @@ void BasicAllocator::free(void* address) {
     Segment* segment = ::used_segment_list;
     while (segment) {
         if (segment + 3 == address) {
-            ::pop_from_list(::used_segment_list, segment);
-            ::push_to_list(::free_segment_list, segment);
+            SegmentList::pop(::used_segment_list, segment);
+            SegmentList::push(::free_segment_list, segment);
             return;
         } else {
-            segment = segment->next;
+            segment = segment->next();
         }
     }
 }
 
 size_t BasicAllocator::num_free_segments()
 {
-    return count_list(::free_segment_list);
+    return SegmentList::size(::free_segment_list);
 }
 
 size_t BasicAllocator::num_used_segments()
 {
-    return count_list(::used_segment_list);
+    return SegmentList::size(::used_segment_list);
 }
 
 Segment *BasicAllocator::free_head()
 {
-    Segment * result = ::free_segment_list;
-    return result;
+    return ::free_segment_list;
 }
 
 Segment *BasicAllocator::used_head()
 {
-    Segment * result = ::used_segment_list;
-    return result;
+    return ::used_segment_list;
+}
+
+Segment *Segment::previous() const {
+    return reinterpret_cast<Segment*>(m_previous);
+}
+
+void Segment::set_previous(Segment *previous) {
+    m_previous = reinterpret_cast<Word>(previous);
+}
+
+Segment *Segment::next() const {
+    return reinterpret_cast<Segment*>(m_next);
+}
+
+void Segment::set_next(Segment *next) {
+    m_next = reinterpret_cast<Word>(next);
+}
+
+size_t Segment::size() const {
+    return m_size;
+}
+
+void Segment::set_size(size_t size) {
+    m_size = size;
 }

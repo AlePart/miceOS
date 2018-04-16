@@ -4,11 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct Segment {
-    size_t size;
-    Segment* previous;
-    Segment* next;
-};
+using Word = uint64_t;
+const size_t WORD_SIZE = sizeof(Word);
+
+class Segment;
 
 class BasicAllocator
 {
@@ -24,5 +23,33 @@ public:
     static Segment* free_head();
     static Segment* used_head();
 };
+
+class Segment {
+public:
+    Segment* previous() const;
+    void set_previous(Segment* previous);
+
+    Segment* next() const;
+    void set_next(Segment* next);
+
+    size_t size() const;
+    void set_size(size_t size);
+
+private:
+    Word m_size;
+    Word m_previous;
+    Word m_next;
+} __attribute__((packed));
+
+class SegmentList {
+public:
+    SegmentList() = delete;
+
+    static void pop(Segment*& head, Segment* segment);
+    static void push(Segment*& head, Segment* Segment);
+    static size_t size(Segment* head);
+};
+
+static_assert(sizeof(Segment) == 3 * WORD_SIZE);
 
 #endif
