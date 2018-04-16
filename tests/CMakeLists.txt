@@ -1,5 +1,7 @@
 set(TARGET_NAME miceOS-tests)
 add_executable(${TARGET_NAME}
-    main.c
+    ${CMAKE_SOURCE_DIR}/src/kernel/allocator/basic_allocator.cpp
+    main.cpp
 )
-set_target_properties(${TARGET_NAME} PROPERTIES LANGUAGE C)
+include_directories(${CMAKE_SOURCE_DIR}/src)
+set_target_properties(${TARGET_NAME} PROPERTIES LANGUAGE CXX)

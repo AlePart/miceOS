@@ -8,6 +8,7 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
+#include "kernel/allocator/basic_allocator.h"
 #include "kernel/terminal.h"
 #include "kernel/string.h"
 #include "kernel/memory.h"
@@ -42,8 +43,9 @@ extern "C" {
 
 void kernel_main(void) 
 {
-    /* Initialize terminal interface */
     Terminal::initialize();
+
+    /* Initialize terminal interface */
     Terminal::write("Hello, kernel World!");
     Terminal::newline();
     Terminal::write("Wow a new Line\n");
