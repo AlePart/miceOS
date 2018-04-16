@@ -110,6 +110,12 @@ void terminal_initialize(void)
     }
 }
 
+void terminal_newline()
+{
+    terminal_row++;
+    terminal_column=0;
+}
+
 void terminal_setcolor(uint8_t color) 
 {
     terminal_color = color;
@@ -180,11 +186,6 @@ void terminal_change_color(enum vga_color fg, enum vga_color bg)
     terminal_color = vga_entry_color(fg, bg);
 
 }
-void terminal_newline()
-{
-    terminal_row++;
-    terminal_column=0;
-}
 
 
 static inline uint8_t inb(uint16_t port)
@@ -212,6 +213,9 @@ char getScancode()
 char getchar() {
     return getScancode(); // must be pasrsed with scancode
 }
+
+extern "C" {
+
 void kernel_main(void) 
 {
     /* Initialize terminal interface */
@@ -230,8 +234,11 @@ void kernel_main(void)
         terminal_newline();
     }
     terminal_change_color(VGA_COLOR_RED,VGA_COLOR_WHITE);
-    terminal_writestring(getchar());
+    char c = getchar();
+    terminal_writestring(&c);
     terminal_newline();
     terminal_writestring("last line");
+
+}
 
 }

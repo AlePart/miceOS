@@ -2,8 +2,8 @@ set(TARGET_NAME miceOS.bin)
 
 set(TARGET_SOURCES
     boot/boot.s
-    kernel.c
-    kernel/allocator/basic_allocator.c
+    kernel.cpp
+    kernel/allocator/basic_allocator.cpp
 )
 
 set(TARGET_HEADERS
