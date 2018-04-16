@@ -57,15 +57,16 @@ ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
   return current_el;
 }
 
-ALLOCATOR_ELEMENT* search_page(void* address) 
+ALLOCATOR_ELEMENT* search_page(void* address)
 {
-  uint32_t* directory = (uint32_t*)(((uint32_t)address) & (1<<allocator_hdr_addr->sz));
-  ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
+//  uint32_t* directory = (uint32_t*)(((uint32_t)address) & (1<<allocator_hdr_addr->sz));
+//  ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
 
-  while( directory != current_el->base_directory ) //search for element with given dir
-  {
-    current_el++;
-  }
+//  while( directory != current_el->base_directory ) //search for element with given dir
+//  {
+//    current_el++;
+//  }
+    return (ALLOCATOR_ELEMENT*)( ((void*)allocator_hdr_addr) + sizeof(ALLOCATOR_HEADER) + (address >> allocator_hdr_addr->sz)*sizeof(ALLOCATOR_ELEMENT));
 }
 
 
