@@ -211,7 +211,7 @@ char getchar() {
 
     return getScancode(); // must be pasrsed with scancode
 }
-void kernel_main(void) 
+void kernel_main(multiboot_info_t* mbd, unsigned int magic)
 {
     /* Initialize terminal interface */
     terminal_initialize();
