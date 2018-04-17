@@ -76,6 +76,9 @@ _start:
 	runtime support to work as well.
 	*/
 
+	/* pushing ebx in stack for to retrive memory info */
+	push %ebx
+
 	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
 	aligned at the time of the call instruction (which afterwards pushes

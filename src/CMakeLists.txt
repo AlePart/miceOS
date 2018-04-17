@@ -15,6 +15,7 @@ set(TARGET_HEADERS
     kernel/memory.h
     kernel/string.h
     kernel/terminal.h
+    kernel/include/boot/multiboot.h
 )
 
 add_executable(${TARGET_NAME} ${TARGET_SOURCES} ${TARGET_HEADERS})

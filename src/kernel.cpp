@@ -41,7 +41,7 @@ char getchar() {
 
 extern "C" {
 
-void kernel_main(void) 
+void kernel_main(multiboot_info_t* mbd, unsigned int magic) 
 {
     BasicAllocator::initialize((void*)0x1000000, 1024 * 1024);
 
