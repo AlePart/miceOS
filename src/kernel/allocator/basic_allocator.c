@@ -66,7 +66,7 @@ ALLOCATOR_ELEMENT* search_page(void* address)
 //  {
 //    current_el++;
 //  }
-    return (ALLOCATOR_ELEMENT*)( ((void*)allocator_hdr_addr) + sizeof(ALLOCATOR_HEADER) + (address >> allocator_hdr_addr->sz)*sizeof(ALLOCATOR_ELEMENT));
+    return (ALLOCATOR_ELEMENT*)( ((void*)allocator_hdr_addr) + sizeof(ALLOCATOR_HEADER) + ((uint32_t)address >> allocator_hdr_addr->sz)*sizeof(ALLOCATOR_ELEMENT));
 }
 
 

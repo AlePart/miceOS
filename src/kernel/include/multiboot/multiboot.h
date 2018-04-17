@@ -1,5 +1,3 @@
-This is the source code in the file multiboot.h:
-
      /* multiboot.h - Multiboot header file. */
      /* Copyright (C) 1999,2003,2007,2008,2009,2010  Free Software Foundation, Inc.
       *
