@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "kernel/allocator/basic_allocator.h"
-#include "kernel/include/multiboot/multiboot.h"
+
+
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -203,12 +203,12 @@ char getchar() {
 
     return getScancode(); // must be pasrsed with scancode
 }
-void kernel_main(multiboot_info_t* mbd, unsigned int magic)
+void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
     /* Initialize terminal interface */
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
-    basic_allocator_init(1024*1024*1024,PAGE_1K);
+//    basic_allocator_init(1024*1024*1024,PAGE_1K);
 #ifdef DEBUG
     terminal_writestring("DEBUG");
 #endif
