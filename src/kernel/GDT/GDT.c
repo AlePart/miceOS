@@ -1,6 +1,8 @@
 #incldue "GDT.h"
 
-uint64_t descriptors[MAX_DESCRIPTORS]; 
+uint64_t descriptors[MAX_DESCRIPTORS]; //64k descriptors size
+
+
 
 void GDT_create_descriptor(uint32_t base, uint32_t limit, uint16_t flag, uint64_t & descriptor)
 {
@@ -20,18 +22,18 @@ void GDT_create_descriptor(uint32_t base, uint32_t limit, uint16_t flag, uint64_
  
 }
 
-uint64_t* GDT_search_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
+uint32_t GDT_search_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
 {
     uint64_t element;
     GDT_create_descriptor(base,limit,flag,element);
-    for(int i =0; i<=gdt.size; ++i)
+    for(uint32_t i =0; i<=gdt.size; ++i)
     {
       if(element == descriptors[i])
       {
-        return &descriptors[i];
+        return i;
       }
     } 
-    return NULL;
+    return 0;
 }
 
 
@@ -60,9 +62,29 @@ void GDT_append_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
 
 void GDT_remove_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
 {
-  uint64_t* elem = GDT_search_descriptor(base,limit,flag)
-  if(NULL != elem)
+  uint32_t elem_pos = GDT_search_descriptor(base,limit,flag)
+  if(0 != elem)
   {
-    
+    for(uint32_t i = elem_pos ; i<gdt.size; i++) // from found element position to element size - 1
+    {
+      descriptors[i]=descriptors[i+1];
+    }
+    //clean last element
+    descriptors[gdt.size] = 0;
+    gdt.size--;
   }
 }
+
+
+void GDT_update()
+{
+    asm ("movl %0, %%eax;
+        :
+        :"r"(descriptors)     /* x is input operand */
+        :"%eax");   /* %eax is clobbered register */
+    asm ("LGDT %eax");
+}
+
+
+
+
