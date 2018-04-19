@@ -36,13 +36,25 @@ uint32_t GDT_search_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
     return 0;
 }
 
-
-void GDT_init(uint32_t kernel_reservation)
+void GDT_init(size_t size)
+{  
+  gdt.size =0;
+  gdt.address=0;
+  //allocate GDT
+  gdt.address = (uint32_t) descriptors;
+  create_descriptor(0, 0, 0,descriptors[0]);
+  create_descriptor(0, size, (GDT_CODE_PL0),ker_code,descriptors[1]);
+  create_descriptor(0, size, (GDT_DATA_PL0),descriptors[2]);
+  create_descriptor(0, size, (GDT_CODE_PL3),ker_code,descriptors[3]);
+  create_descriptor(0, size, (GDT_DATA_PL3),descriptors[4]);
+  gdt.size--; // size must be element number -1
+}
+void GDT_init(uint32_t kernel_reservation)  //kernel reservation instead of descriptor
 {
   gdt.size =0;
   gdt.address=0;
   //allocate GDT
-  gdt.address = gdt.descriptors;
+  gdt.address = (uint32_t)descriptors;
   create_descriptor(0, 0, 0,descriptors[0]);
   create_descriptor(0, 0x0001000000, (GDT_CODE_PL0),ker_code,descriptors[1]);
   create_descriptor(0, 0x0001000000, (GDT_DATA_PL0),descriptors[2]);
