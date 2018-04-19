@@ -1,7 +1,8 @@
 .data
 .text
-.globl reload_data
-.globl reloadCS
+.global .reload_data
+.global .reloadCS
+
 
 .reload_data:
 push %ax
@@ -12,9 +13,11 @@ mov %ax, %fs
 mov %ax, %gs
 mov %ax, %ss
 pop %ax
+jmp .reloadCS
+rejump:
 ret
 
 
 
-reloadCS:
-jmp reload_data
+.reloadCS:
+jmp rejump
