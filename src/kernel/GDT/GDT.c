@@ -50,9 +50,6 @@ void GDT_init(uint32_t kernel_reservation)
 }
 
 
-
-
-
 void GDT_append_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
 {
   gdt.size++;
@@ -82,7 +79,7 @@ void GDT_update()
         :
         :"r"(descriptors)     /* x is input operand */
         :"%eax");   /* %eax is clobbered register */
-    asm ("LGDT %eax");
+    asm ("lgdt %eax");
 }
 
 
