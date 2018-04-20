@@ -50,12 +50,12 @@ PAGE_DIR allocate_pages(size_t size)
     page_directory[need_pages >> PAGE_DIR_SIZE_SHIFT ] = (uint32_t*)(allocation << PAGE_SHIFT);
   } 
   page_directory[0] = page_directory;
-  
   return (PAGE_DIR)page_directory;
 }
+
 void change_dir_tbl()
 {
-  //allocate page dir size
+
   //setup cr3
 }
 
