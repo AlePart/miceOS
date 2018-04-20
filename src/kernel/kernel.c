@@ -2,6 +2,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "memory/allocator/basic_allocator.h"
+
+static void* MEMORY_START_ADDRESS = 0x1000000;
+static const size_t MEMORY_SIZE_BYTES = 1024 * 1024 * 1024;
 
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -208,7 +212,7 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     /* Initialize terminal interface */
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
-//    basic_allocator_init(1024*1024*1024,PAGE_1K);
+    basic_allocator_initialize(MEMORY_START_ADDRESS, MEMORY_SIZE_BYTES);
 #ifdef DEBUG
     terminal_writestring("DEBUG");
 #endif

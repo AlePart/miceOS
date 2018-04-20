@@ -1,46 +1,101 @@
 #include "basic_allocator.h"
 
+#include <stdint.h>
+
+typedef uint32_t Word;
+static const size_t WORD_SIZE = sizeof(Word);
+
 static void* memory_start;
-static Segment* free_segment_list;
-static Segment* used_segment_list;
+static Segment* free_head;
+static Segment* used_head;
+
+static void linked_list_pop(Segment **head, Segment *segment)
+{
+    if (segment->previous) {
+        segment->previous->next = segment->next;
+    } else if (segment->next) {
+        segment->next->previous = NULL;
+        *head = segment->next;
+    } else {
+        *head = NULL;
+    }
+
+    segment->previous = NULL;
+    segment->next = NULL;
+}
+
+static void linked_list_push(Segment **head, Segment *segment)
+{
+    if (*head) {
+        segment->previous = NULL;
+        segment->next = *head;
+        (*head)->previous = segment;
+    } else {
+        *head = segment;
+        segment->previous = NULL;
+        segment->next = NULL;
+    }
+}
+
+static size_t linked_list_size(Segment *head)
+{
+    size_t result = 0;
+    Segment* segment = head;
+    while (segment) {
+        ++result;
+        segment = segment->next;
+    }
+    return result;
+}
+
+static void* segment_data_begin(Segment* segment) {
+    return (uint8_t*)segment + sizeof(Segment);
+}
 
 void basic_allocator_initialize(void *start, size_t memory_bytes_size)
 {
     memory_start = start;
-    free_segment_list = (Segment*) memory_start;
-    used_segment_list = NULL;
 
-    segment_set_size(free_segment_list, memory_bytes_size - 3 * WORD_SIZE);
-    segment_set_previous(free_segment_list, NULL);
-    segment_set_next(free_segment_list, NULL);
+    free_head = (Segment*) memory_start;
+    free_head->size = memory_bytes_size - sizeof(Segment);
+    free_head->previous = NULL;
+    free_head->next = NULL;
+
+    used_head = NULL;
 }
 
 void *basic_allocator_alloc(size_t bytes_to_alloc)
 {
+    // Round bytes to word size
     bytes_to_alloc = ((bytes_to_alloc / WORD_SIZE) + 1) * WORD_SIZE;
 
-    Segment* current_segment = free_segment_list;
+    Segment* current_segment = free_head;
 
     while (current_segment) {
-        if (segment_size(current_segment) < bytes_to_alloc) {
-            current_segment = segment_next(current_segment);
+        // Segment can hold the request size...so go next
+        if (current_segment->size < bytes_to_alloc) {
+            current_segment = current_segment->next;
             continue;
         }
 
-        if (segment_size(current_segment) > bytes_to_alloc) {
-            Segment* remainder = current_segment + 3 + (bytes_to_alloc / WORD_SIZE);
-            segment_set_size(remainder, segment_size(current_segment) - bytes_to_alloc - 3 * WORD_SIZE);
-            segment_set_previous(remainder, current_segment);
-            segment_set_next(remainder, segment_next(current_segment));
+        // Segment is greater than requested...so we split it in two pieces
+        if (current_segment->size > bytes_to_alloc) {
+            uint8_t* remainder_start = (uint8_t*)current_segment  + sizeof(Segment) + bytes_to_alloc;
+            Segment* remainder = (Segment*) remainder_start;
+            remainder->size = current_segment->size - bytes_to_alloc - sizeof(Segment);
+            remainder->previous = current_segment;
+            remainder->next = current_segment->next;
 
-            segment_set_size(current_segment, bytes_to_alloc);
-            segment_set_next(current_segment, remainder);
+            current_segment->size = bytes_to_alloc;
+            current_segment->next = remainder;
         }
 
-        segment_list_pop(&free_segment_list, current_segment);
-        segment_list_push(&used_segment_list, current_segment);
+        // Here or the current segment had the same size of the request or we splitted it
+        // So we put it in the used list
+        linked_list_pop(&free_head, current_segment);
+        linked_list_push(&used_head, current_segment);
 
-        return current_segment + 3;
+        return segment_data_begin(current_segment);
     }
 
     return NULL;
@@ -48,104 +103,34 @@ void *basic_allocator_alloc(size_t bytes_to_alloc)
 
 void basic_allocator_free(void *address)
 {
-    Segment* segment = used_segment_list;
+    Segment* segment = used_head;
     while (segment) {
-        if (segment + 3 == address) {
-            segment_list_pop(&used_segment_list, segment);
-            segment_list_push(&free_segment_list, segment);
+        if (segment_data_begin(segment) == address) {
+            linked_list_pop(&used_head, segment);
+            linked_list_push(&free_head, segment);
             return;
         } else {
-            segment = segment_next(segment);
+            segment = segment->next;
         }
     }
 }
 
 size_t basic_allocator_num_free_segments()
 {
-    return segment_list_size(free_segment_list);
+    return linked_list_size(free_head);
 }
 
 size_t basic_allocator_num_used_fregments()
 {
-    return segment_list_size(used_segment_list);
+    return linked_list_size(used_head);
 }
 
 Segment *basic_allocator_free_head()
 {
-    return free_segment_list;
+    return free_head;
 }
 
 Segment *basic_allocator_used_head()
 {
-    return used_segment_list;
-}
-
-Segment *segment_previous(const Segment *self)
-{
-    return (Segment*)self->m_previous;
-}
-
-void segment_set_previous(Segment *self, Segment *previous)
-{
-    self->m_previous = (Word)previous;
-}
-
-Segment *segment_next(const Segment *self)
-{
-    return (Segment*)self->m_next;
-}
-
-void segment_set_next(Segment *self, Segment *next)
-{
-    self->m_next = (Word)next;
-}
-
-size_t segment_size(const Segment *self)
-{
-    return self->m_size;
-}
-
-void segment_set_size(Segment *self, size_t size)
-{
-    self->m_size = size;
-}
-
-void segment_list_pop(Segment **head, Segment *segment)
-{
-    if (segment_previous(segment)) {
-        segment_set_next(segment_previous(segment), segment_next(segment));
-    }
-    else if (segment_next(segment)) {
-        segment_set_previous(segment_next(segment), NULL);
-        *head = segment_next(segment);
-    } else {
-        *head = NULL;
-    }
-
-    segment_set_previous(segment, NULL);
-    segment_set_next(segment, NULL);
-}
-
-void segment_list_push(Segment **head, Segment *segment)
-{
-    if (*head) {
-        segment_set_next(*head, segment);
-        segment_set_previous(segment, *head);
-        segment_set_next(segment, NULL);
-    } else {
-        *head = segment;
-        segment_set_previous(segment, NULL);
-        segment_set_next(segment, NULL);
-    }
-}
-
-size_t segment_list_size(Segment *head)
-{
-    size_t result = 0;
-    Segment* segment = head;
-    while (segment) {
-        ++result;
-        segment = segment_next(segment);
-    }
-    return result;
+    return used_head;
 }
