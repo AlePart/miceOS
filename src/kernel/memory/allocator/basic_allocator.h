@@ -1,43 +1,37 @@
 #ifndef BASIC_ALLOCATOR_H
 #define BASIC_ALLOCATOR_H
-# include <stdint.h>
-#include <stdbool.h>
+
 #include <stddef.h>
+#include <stdint.h>
 
-#define FREE_PAGE (1<<0)
-#define KERNEL_PAGE (1<<1)
-#define USER_PAGE (1<<2)
-#define STACK_PAGE (1<<3)
-#define HEAP_PAGE (1<<4)
+typedef uint32_t Word;
 
-typedef enum {
-  OWNER_KERNEL,
-  OWNER_USER
-}PAGE_OWNER;
-typedef enum
-{
-  PAGE_STACK,
-  PAGE_DATA,
-  PAGE_EXECUTABLE,
-  PAGE_HEAP
-}PAGE_TYPE;
-typedef enum {
-  PAGE_4K =12,
-  PAGE_2k =11,
-  PAGE_1K =10
-}PAGE_SIZE;
+const size_t WORD_SIZE = sizeof(Word);
 
-typedef struct
-{
-  void* base_directory;
-  uint32_t type_mask; 
-  void* prev;
-  void* next;
-}ALLOCATOR_ELEMENT;
+typedef struct SegmentStruct {
+    Word m_size;
+    Word m_previous;
+    Word m_next;
+} Segment;
 
-bool basic_allocator_init(uint32_t mem_size, PAGE_SIZE pg_size);
-void* allocate_area(size_t size, PAGE_OWNER owner); //retuns the first base_dictionary
-void* append_area(void* address, size_t size, PAGE_OWNER owner); //returns the new area appended to the given address NULL if error
-void free_area(void* address);
-ALLOCATOR_ELEMENT* search_page(void* address); //search an allocator element by given address useful for mmu
+Segment* segment_previous(const Segment* self);
+void segment_set_previous(Segment* self, Segment* previous);
+Segment* segment_next(const Segment* self);
+void segment_set_next(Segment* self, Segment* next);
+size_t segment_size(const Segment* self);
+void segment_set_size(Segment* self, size_t size);
+
+void basic_allocator_initialize(void* start, size_t memory_size);
+void* basic_allocator_alloc(size_t size);
+void basic_allocator_free(void* address);
+size_t basic_allocator_num_free_segments();
+size_t basic_allocator_num_used_fregments();
+Segment* basic_allocator_free_head();
+Segment* basic_allocator_used_head();
+
+
+void segment_list_pop(Segment** head, Segment* segment);
+void segment_list_push(Segment** head, Segment* segment);
+size_t segment_list_size(Segment* head);
+
 #endif
