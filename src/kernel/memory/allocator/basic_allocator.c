@@ -48,7 +48,7 @@ static size_t linked_list_size(Segment *head)
     return result;
 }
 
-static void* segment_data_begin(Segment* segment) {
+static void* segment_data_begin_address(Segment* segment) {
     return (uint8_t*)segment + sizeof(Segment);
 }
 
@@ -72,15 +72,15 @@ void *basic_allocator_alloc(size_t bytes_to_alloc)
     Segment* current_segment = free_head;
 
     while (current_segment) {
-        // Segment can hold the request size...so go next
+        // Segment can't hold the request size...so try next
         if (current_segment->size < bytes_to_alloc) {
             current_segment = current_segment->next;
             continue;
         }
 
-        // Segment is greater than requested...so we split it in two pieces
+        // Segment is greater than requested...so we split it in two pieces and pop the first one
         if (current_segment->size > bytes_to_alloc) {
-            uint8_t* remainder_start = (uint8_t*)current_segment  + sizeof(Segment) + bytes_to_alloc;
+            uint8_t* remainder_start = (uint8_t*)current_segment + sizeof(Segment) + bytes_to_alloc;
             Segment* remainder = (Segment*) remainder_start;
             remainder->size = current_segment->size - bytes_to_alloc - sizeof(Segment);
             remainder->previous = current_segment;
@@ -95,7 +95,7 @@ void *basic_allocator_alloc(size_t bytes_to_alloc)
         linked_list_pop(&free_head, current_segment);
         linked_list_push(&used_head, current_segment);
 
-        return segment_data_begin(current_segment);
+        return segment_data_begin_address(current_segment);
     }
 
     return NULL;
@@ -104,8 +104,9 @@ void *basic_allocator_alloc(size_t bytes_to_alloc)
 void basic_allocator_free(void *address)
 {
     Segment* segment = used_head;
+
     while (segment) {
-        if (segment_data_begin(segment) == address) {
+        if (segment_data_begin_address(segment) == address) {
             linked_list_pop(&used_head, segment);
             linked_list_push(&free_head, segment);
             return;
