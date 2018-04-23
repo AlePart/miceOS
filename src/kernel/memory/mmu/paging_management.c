@@ -18,7 +18,7 @@ register uint32_t CR3 asm ("cr3");
 
 
 
-PAGE_DIR page_allocator_init(size_t memory_size)
+inline PAGE_DIR page_allocator_init(size_t memory_size)
 {
   basic_allocator_initialize(0x00000000, memory_size);
   PAGE_DIR ker_dir_addr=allocate_pages(PAGE_SIZE_4K * PAGE_SIZE_4K); // 16MB kernel reservation
@@ -98,7 +98,6 @@ PAGE_DIR allocate_pages(size_t size)
 inline void change_dir_tbl(PAGE_DIR directory)
 {
   CR3 = directory;
-  //setup cr3
 }
 
 
