@@ -29,6 +29,27 @@ PAGE_DIR page_allocator_init(size_t memory_size)
   // enable paging by setting CR0
 
 }
+void free_pages(PAGE_DIR directory)
+{
+  for(uint32_t i=0; i< PAGE_DIR_SIZE; i++)
+  {
+    PAGE_TBL pg = directory[i];
+    if(pg != 0)
+    {
+      for(uint32_t j=0; i< PAGE_TBL_SIZE; j++)
+      {
+        if(pg[j] != 0)
+        {
+          basic_allocator_free((void*)pg[j]);
+        }
+        pg[j] = 0;
+      }
+    }
+    basic_allocator_free((void*)directory[i]);
+    directory[i] = 0;
+  }
+   basic_allocator_free((void*)directory);
+}
 
 PAGE_DIR allocate_pages(size_t size)
 {
@@ -40,7 +61,12 @@ PAGE_DIR allocate_pages(size_t size)
   }
    
   PAGE_DIR page_directory =(PAGE_DIR)basic_allocator_alloc(PAGE_SIZE_4K); //allocate 4k for directory
-  
+  //TODO MEMSET instead for
+  for(uint32_t i=0; i< PAGE_SIZE_4K; i++)
+  {
+    (uint8_t)(*page_directory)=0;
+  }
+
   PAGE_TBL page_tbl;
   if(0 == need_pages % PAGE_TBL_SIZE) // allocate 4k aligned space
   {
