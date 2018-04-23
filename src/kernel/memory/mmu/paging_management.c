@@ -1,24 +1,28 @@
 
+#include "../allocator/basic_allocator.h"
 #define PAGE_SHIFT (12)
 #define DIR_SHIFT (22)
 #define PAGE_DIR_SIZE (1024)
+#define PAGE_TBL_SIZE (1024)
 #define PAGE_DIR_SIZE_SHIFT (10)
+#define PAGE_SIZE_4K (4096)
 
 typedef uint32_t** PAGE_DIR;
-;
+typedef uint32_t** PAGE_TBL;
 
 
 
-void page_allocator_init(uint32_t* page_dir, uint32_t* page_table)
+
+PAGE_DIR page_allocator_init(size_t memory_size)
 {
-
-  //memsetting page_descriptors
-
+  basic_allocator_initialize(0x00000000, memory_size);
+  return allocate_pages(PAGE_SIZE_4K * PAGE_SIZE_4K); // 16MB kernel reservation
+   
   /*mov eax, page_directory
   mov cr3, eax*/
 
 
- 
+  
    /*mov eax, cr0
    or eax, 0x80000001
    mov cr0, eax*/
@@ -29,33 +33,40 @@ void page_allocator_init(uint32_t* page_dir, uint32_t* page_table)
 PAGE_DIR allocate_pages(size_t size)
 {
   uint32_t need_pages = size >> PAGE_SHIFT;
-  
-
+  uint32_t need_dir = 1 + (size >> DIR_SHIFT);
   if(0 != size & MASK_PAGE_4K )
   {
     need_pages++;
   }
-  //page for this entry
- 
-  // TODO allocator for 4k dir
-  uint32_t* page_directory[1+(size >> DIR_SHIFT)];
-  //TODO ALLOCATOR FOR page table 4k
-  // TODO MANAGE MORE 1024 pages
-  uint32_t* page_directory[need_pages];
+   
+  PAGE_DIR page_directory =(PAGE_DIR)basic_allocator_alloc(PAGE_SIZE_4K); //allocate 4k for directory
   
-  for(need_pages; need_pages > 0; need_pages--)
+  PAGE_TBL page_tbl;
+  if(0 == need_pages % PAGE_TBL_SIZE) // allocate 4k aligned space
   {
-    
-    uint32_t* allocation;
-    page_directory[need_pages >> PAGE_DIR_SIZE_SHIFT ] = (uint32_t*)(allocation << PAGE_SHIFT);
-  } 
-  page_directory[0] = page_directory;
-  return (PAGE_DIR)page_directory;
+    page_tbl = (PAGE_TBL)basic_allocator_alloc(PAGE_SIZE_4K * (need_pages / PAGE_TBL_SIZE ));
+  }
+  else
+  {
+    page_tbl = (PAGE_TBL)basic_allocator_alloc(PAGE_SIZE_4K * (need_pages / PAGE_TBL_SIZE ) + 1);
+  }
+
+  for(int i =0 ; i < need_dir; need_dir++)
+  {
+    page_directory[i] = (uint32_t*)(((void*)page_tbl) +  (i << PAGE_SIZE_4K)); // dir_entry[i] is the base pg tbl plus shifted index
+    for(uint16_t cnt =0 ; i < PAGE_TBL_SIZE ; i++)
+    {
+      page_tbl[cnt] = basic_allocator_alloc(PAGE_SIZE_4K) ; // the real allocation
+    }
+    need_pages -= (1 << PAGE_SHIFT) - 1;
+  }
+ 
+  return page_directory;
 }
 
-void change_dir_tbl()
+void change_dir_tbl(PAGE_DIR directory)
 {
-
+  
   //setup cr3
 }
 
