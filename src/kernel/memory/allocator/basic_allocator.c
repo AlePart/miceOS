@@ -1,144 +1,141 @@
 #include "basic_allocator.h"
 
+#include <stdint.h>
+#include <assert.h>
 
+typedef uint32_t Word;
+static const size_t WORD_SIZE = sizeof(Word);
 
-typedef struct
+static void* memory_start;
+static Segment* free_head;
+static Segment* used_head;
+
+static void linked_list_pop(Segment **head, Segment *segment)
 {
-  PAGE_SIZE sz;
-  uint32_t max_pages;
-}ALLOCATOR_HEADER;
-
-
-#define KERNEL_MEMORY_RESERVATION 0x1000000
-
-ALLOCATOR_HEADER* allocator_hdr_addr;
-
-bool basic_allocator_init(uint32_t mem_size, PAGE_SIZE pg_size)
-{
-  uint32_t availble_pages= mem_size>>(uint32_t)pg_size;
-  uint32_t allocator_element_needed= (mem_size >>(uint32_t)pg_size);
-  uint32_t allocator_mem_reserve= allocator_element_needed*sizeof(ALLOCATOR_ELEMENT) + sizeof(ALLOCATOR_HEADER);
-  void* base_directory=allocator_mem_reserve + KERNEL_MEMORY_RESERVATION;
-  allocator_hdr_addr = KERNEL_MEMORY_RESERVATION;
-  allocator_hdr_addr->sz=pg_size;
-  uint32_t counter = 0;
-  uint32_t allocator_reserved_pages =  (allocator_mem_reserve >> allocator_hdr_addr->sz); //how many pages are needed for allocator depending on pgsize?
-  ALLOCATOR_ELEMENT* current_el= (ALLOCATOR_ELEMENT*)(allocator_hdr_addr + sizeof(ALLOCATOR_HEADER));
-  do
-  {
-       current_el->base_directory=base_directory;
-       current_el->type_mask=FREE_PAGE;
-       base_directory +=(1<<allocator_hdr_addr->sz);
-  }while(counter++ < allocator_reserved_pages);
-  return true;
-}
-
-void set_page_properties(ALLOCATOR_ELEMENT* current_el, PAGE_OWNER owner) //maybe inline is better
-{
-  if(OWNER_KERNEL ==owner )
-  {
-    current_el->type_mask |= KERNEL_PAGE;
-  }
-  else if(OWNER_USER == owner)
-  {
-    current_el->type_mask |= USER_PAGE;
-  }
-}
-
-ALLOCATOR_ELEMENT* allocate_page(PAGE_OWNER owner)
-{
-  ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
-  while( 0x00000000 == current_el->type_mask & FREE_PAGE) //page is free?
-  {
-    current_el++; //next element;
-  }
-  current_el->type_mask &= ~FREE_PAGE; //reset flag
-  set_page_properties(current_el,owner);
-  return current_el;
-}
-
-ALLOCATOR_ELEMENT* search_page(void* address)
-{
-//  uint32_t* directory = (uint32_t*)(((uint32_t)address) & (1<<allocator_hdr_addr->sz));
-//  ALLOCATOR_ELEMENT* current_el= ((void*)allocator_hdr_addr)+ sizeof(ALLOCATOR_HEADER);
-
-//  while( directory != current_el->base_directory ) //search for element with given dir
-//  {
-//    current_el++;
-//  }
-    return (ALLOCATOR_ELEMENT*)( ((void*)allocator_hdr_addr) + sizeof(ALLOCATOR_HEADER) + ((uint32_t)address >> allocator_hdr_addr->sz)*sizeof(ALLOCATOR_ELEMENT));
-}
-
-
-ALLOCATOR_ELEMENT* allocate_pages(size_t size, PAGE_OWNER owner)
-{
-  ALLOCATOR_ELEMENT* prev_el=NULL;
-  void* elem_to_ret = NULL;
-  uint32_t pages= size/(1<<allocator_hdr_addr->sz); // how many pages?;
-  if( size%(1<<allocator_hdr_addr->sz)) //residual page
-  {
-    pages++;
-  }
-  do
-  {
-    ALLOCATOR_ELEMENT* current_el=allocate_page(owner);
-    if(NULL != prev_el)
-    {
-      elem_to_ret = current_el->base_directory;
-      prev_el->next=current_el;
+    if (segment->previous) {
+        segment->previous->next = segment->next;
+        segment->next->previous = segment->previous;
+    } else if (segment->next) {
+        segment->next->previous = NULL;
+        *head = segment->next;
+    } else {
+        *head = NULL;
     }
-    current_el->prev = prev_el;
-    prev_el = current_el;
-    pages--;
-  }while(pages!=0);
-  return elem_to_ret;
+
+    segment->previous = NULL;
+    segment->next = NULL;
 }
 
-
-ALLOCATOR_ELEMENT* append_pages(void* address, size_t size, PAGE_OWNER owner)
+static void linked_list_push(Segment **head, Segment *segment)
 {
-  ALLOCATOR_ELEMENT* current_el= search_page(address);
-  if(0x00000000 == (current_el->type_mask & FREE_PAGE) ) // must be non free the page, else ret NULL
-  {
-    return allocate_pages(size,owner);
-  }
-  else
-  {
+    if (*head) {
+        segment->previous = NULL;
+        segment->next = *head;
+        (*head)->previous = segment;
+    } else {
+        *head = segment;
+        segment->previous = NULL;
+        segment->next = NULL;
+    }
+}
+
+static size_t linked_list_size(Segment *head)
+{
+    size_t result = 0;
+    Segment* segment = head;
+    while (segment) {
+        ++result;
+        segment = segment->next;
+    }
+    return result;
+}
+
+static void* segment_data_begin_address(Segment* segment) {
+    return (uint8_t*)segment + sizeof(Segment);
+}
+
+void basic_allocator_initialize(void *start, size_t memory_bytes_size)
+{
+    memory_start = start;
+
+    free_head = (Segment*) memory_start;
+    free_head->size = memory_bytes_size - sizeof(Segment);
+    free_head->previous = NULL;
+    free_head->next = NULL;
+
+    used_head = NULL;
+}
+
+void *basic_allocator_alloc(size_t bytes_to_alloc)
+{
+    // Round bytes to word size
+    bytes_to_alloc = ((bytes_to_alloc / WORD_SIZE) + 1) * WORD_SIZE;
+
+    Segment* current_segment = free_head;
+
+    while (current_segment) {
+        // Segment can't hold the request size...so try next
+        if (current_segment->size < bytes_to_alloc) {
+            current_segment = current_segment->next;
+            continue;
+        }
+
+        // Segment is greater than requested...so we split it in two pieces and pop the first one
+        if (current_segment->size > bytes_to_alloc) {
+            uint8_t* remainder_start = (uint8_t*)current_segment + sizeof(Segment) + bytes_to_alloc;
+            Segment* remainder = (Segment*) remainder_start;
+            remainder->size = current_segment->size - bytes_to_alloc - sizeof(Segment);
+            remainder->previous = current_segment;
+            remainder->next = current_segment->next;
+
+            current_segment->size = bytes_to_alloc;
+            current_segment->next = remainder;
+        }
+
+        // Here or the current segment had the same size of the request or we splitted it
+        // So we put it in the used list
+        assert(current_segment->size == bytes_to_alloc);
+
+        linked_list_pop(&free_head, current_segment);
+        linked_list_push(&used_head, current_segment);
+
+        return segment_data_begin_address(current_segment);
+    }
+
     return NULL;
-  }
 }
 
-void* allocate_area(size_t size, PAGE_OWNER owner)
+void basic_allocator_free(void *address)
 {
-  return allocate_pages(size, owner)->base_directory;
-}
-void* append_area(void* address, size_t size, PAGE_OWNER owner)
-{
-  
-  return allocate_pages(size , owner)->base_directory;
-}
+    Segment* segment = used_head;
 
-void free_area(void* address)
-{
-  ALLOCATOR_ELEMENT* current_el= search_page(address);
-  while(NULL != current_el->prev) // going to first element
-  {
-    current_el=current_el->prev;
-  }
-  ALLOCATOR_ELEMENT* prev_el;
-  while(NULL != current_el->next)
-  {
-    current_el->type_mask = FREE_PAGE; 
-    if( NULL!= current_el->prev) //check if prev is not null to null it and save the prev to delete the next pointer
-    {
-      prev_el = current_el->prev;
-      current_el->prev=NULL;
+    while (segment) {
+        if (segment_data_begin_address(segment) == address) {
+            linked_list_pop(&used_head, segment);
+            linked_list_push(&free_head, segment);
+            return;
+        } else {
+            segment = segment->next;
+        }
     }
-    if( NULL != prev_el) //del next ptr in the end
-    {
-      prev_el->next=NULL;
-    }
-  }
-  current_el->prev = NULL;
-} 
+}
 
+size_t basic_allocator_num_free_segments()
+{
+    return linked_list_size(free_head);
+}
+
+size_t basic_allocator_num_used_fregments()
+{
+    return linked_list_size(used_head);
+}
+
+Segment *basic_allocator_free_head()
+{
+    return free_head;
+}
+
+Segment *basic_allocator_used_head()
+{
+    return used_head;
+}

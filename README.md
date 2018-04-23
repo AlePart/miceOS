@@ -18,6 +18,9 @@ cd /path/to/miceos/repository
 
 If everythings works ok a QtCreator window should pop up ready for developing the project 
 
+![Alt Text](https://raw.githubusercontent.com/AlePart/miceOS/master/doc/run_ide_example.gif)
+
+
 ## Building (deprecated)
 Use script in utils in order to download toolchain
 

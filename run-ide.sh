@@ -28,7 +28,6 @@ docker run \
 filcuc/miceos-docker \
 /bin/bash -c "\
 chuid.sh developer $USER_UID $USER_GID /home;\
-runuser -l developer -c 'cp /home/developer/miceOS/.docker.CMakeLists.txt.user /home/developer/miceOS/CMakeLists.txt.user';\
-runuser -l developer -c 'export DISPLAY=$DISPLAY && /opt/qtcreator/bin/qtcreator /home/developer/miceOS/CMakeLists.txt'"
+runuser -l developer -c 'export DISPLAY=$DISPLAY && /home/developer/miceOS/.docker.run.ide.sh'"
 
 xhost -local:
