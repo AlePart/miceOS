@@ -88,7 +88,7 @@ PAGE_DIR allocate_pages(size_t size)
     {
       page_tbl[cnt] = basic_allocator_alloc(PAGE_SIZE_4K) ; // the real allocation
       page_tbl[cnt] &= (~PAGE_DESCRIPTOR_ENTRY_FLAG_MASK);
-      page_tbl[cnt] |= PAGE_PRESENT | PAGE_RW;
+      page_tbl[cnt] |= PAGE_PRESENT | PAGE_RW | PAGE_USER;
     }
   }
  
