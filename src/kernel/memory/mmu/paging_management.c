@@ -84,7 +84,6 @@ PAGE_DIR allocate_pages(size_t size)
     {
       page_tbl[cnt] = basic_allocator_alloc(PAGE_SIZE_4K) ; // the real allocation
     }
-    need_pages -= (1 << PAGE_SHIFT) - 1;
   }
  
   return page_directory;
