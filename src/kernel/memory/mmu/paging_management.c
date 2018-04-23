@@ -64,7 +64,7 @@ PAGE_DIR allocate_pages(size_t size)
   //TODO MEMSET instead for
   for(uint32_t i=0; i< PAGE_SIZE_4K; i++)
   {
-    (uint8_t*)(*page_directory)[i]=0;
+    (uint8_t)(page_directory[i])=0;
   }
 
   PAGE_TBL page_tbl;
