@@ -65,7 +65,7 @@ PAGE_DIR allocate_pages(size_t size)
     page_tbl = (PAGE_TBL)basic_allocator_alloc(PAGE_SIZE_4K * (need_pages / PAGE_TBL_SIZE ) + 1);
   }
 
-  for(uint32_t i =0 ; i < need_dir; need_dir++)
+  for(uint32_t i =0 ; i < need_dir; i++)
   {
     uint32_t entry = (uint32_t)((page_directory)[i]);
     entry = (uint32_t)(((uint8_t*)page_tbl) +  (i << PAGE_SIZE_4K)); // dir_entry[i] is the base pg tbl plus shifted index
@@ -74,13 +74,13 @@ PAGE_DIR allocate_pages(size_t size)
     (page_directory)[i] = (uint32_t*)entry;
     
 
-    for(uint16_t cnt =0 ; i < PAGE_TBL_SIZE ; cnt++)
+    for(uint16_t cnt =0 ; cnt < PAGE_TBL_SIZE ; cnt++)
     {
       uint32_t entry = (uint32_t)((page_tbl)[cnt]);
       entry = (uint32_t)basic_allocator_alloc(PAGE_SIZE_4K) ; // the real allocation
       entry &= (~PAGE_DESCRIPTOR_ENTRY_FLAG_MASK);
       entry |= PAGE_PRESENT | PAGE_RW | PAGE_USER;
-      (page_tbl)[i] = (uint32_t*)entry;
+      (page_tbl)[cnt] = (uint32_t*)entry;
     }
   }
  

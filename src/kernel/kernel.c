@@ -199,10 +199,10 @@ char getchar() {
 }
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
-
+    page_allocator_init(0x1000000);
     /* Initialize terminal interface */   
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
-    page_allocator_init(0x1000000);
+
 
 }
