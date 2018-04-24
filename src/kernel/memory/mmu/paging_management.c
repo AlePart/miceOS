@@ -8,7 +8,7 @@
 
 PAGE_DIR page_allocator_init(size_t high_mem_size)
 {
-  basic_allocator_initialize((uint32_t*)0x00000001,512*1024*1024-1);
+  basic_allocator_initialize((uint32_t*)(1024*1024*16),512*1024*1024);
   PAGE_DIR ker_dir_addr=allocate_pages(high_mem_size); // 16MB kernel reservation
 
   change_dir_tbl(ker_dir_addr);
