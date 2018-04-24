@@ -21,3 +21,8 @@ If everythings works ok a QtCreator window should pop up ready for developing th
 ![Alt Text](https://raw.githubusercontent.com/AlePart/miceOS/master/doc/run_ide_example.gif)
 
 
+# Contributors
+## Contributors Wanted
+We are searching passionate contributors that want to learn how OS works and help us to develop this OS.
+## How Contribute
+You may fork and develop yor own patch and resubmit via pull request or you may request to became an active devoloper in main distribution
