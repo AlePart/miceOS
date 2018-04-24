@@ -199,7 +199,13 @@ char getchar() {
 }
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
-    page_allocator_init(0x1000000);
+   /* basic_allocator_initialize(0x00000001,1024*1024*1024 *4 - 4096);
+    uint32_t* add1 = (uint32_t*)basic_allocator_alloc(1024*1024*16);
+    uint32_t* add2 = (uint32_t*)basic_allocator_alloc(1024*1024*16);
+    basic_allocator_free(add1);
+    basic_allocator_free(add2);*/
+    PAGE_DIR dir = page_allocator_init(0x1000000);
+    PAGE_DIR d = allocate_pages(1024*1024*30);
     /* Initialize terminal interface */   
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
