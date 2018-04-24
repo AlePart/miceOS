@@ -4,10 +4,12 @@ set(TARGET_SOURCES
     boot/boot.s
     kernel/kernel.c
     kernel/memory/allocator/basic_allocator.c
+    kernel/memory/mmu/paging_management.c
 )
 
 set(TARGET_HEADERS
     kernel/memory/allocator/basic_allocator.h
+    kernel/memory/mmu/paging_management.h
 )
 
 add_executable(${TARGET_NAME} ${TARGET_SOURCES} ${TARGET_HEADERS})

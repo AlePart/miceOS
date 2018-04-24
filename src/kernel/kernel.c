@@ -3,19 +3,9 @@
 #include <stdint.h>
 
 #include "memory/allocator/basic_allocator.h"
+#include "memory/mmu/paging_management.h"
 
-static void* MEMORY_START_ADDRESS = 0x1000000;
-static const size_t MEMORY_SIZE_BYTES = 1024 * 1024 * 1024;
 
-/* Check if the compiler thinks we are targeting the wrong operating system. */
-#if defined(__linux__)
-#error "You are not using a cross-compiler, you will most certainly run into trouble"
-#endif
-
-/* This tutorial will only work for the 32-bit ix86 targets. */
-#if !defined(__i386__)
-#error "This tutorial needs to be compiled with a ix86-elf compiler"
-#endif
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -100,7 +90,7 @@ uint8_t terminal_color;
 /* Note the use of the volatile keyword to prevent the compiler from eliminating dead stores. */
 volatile uint16_t* terminal_buffer;
 
-void terminal_initialize(void) 
+inline void terminal_initialize(void)
 {
     terminal_row = 0;
     terminal_column = 0;
@@ -163,7 +153,7 @@ void terminal_write(const char* data, size_t size)
     }
 }
 
-void terminal_writestring(const char* data) 
+inline void terminal_writestring(const char* data)
 {
     terminal_write(data, strlen(data));
 }
@@ -209,12 +199,10 @@ char getchar() {
 }
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
-    /* Initialize terminal interface */
+
+    /* Initialize terminal interface */   
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
-    basic_allocator_initialize(MEMORY_START_ADDRESS, MEMORY_SIZE_BYTES);
-#ifdef DEBUG
-    terminal_writestring("DEBUG");
-#endif
+    page_allocator_init(0x1000000);
 
 }

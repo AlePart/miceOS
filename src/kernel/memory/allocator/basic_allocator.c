@@ -1,7 +1,7 @@
 #include "basic_allocator.h"
 
 #include <stdint.h>
-#include <assert.h>
+
 
 typedef uint32_t Word;
 static const size_t WORD_SIZE = sizeof(Word);
@@ -94,7 +94,7 @@ void *basic_allocator_alloc(size_t bytes_to_alloc)
 
         // Here or the current segment had the same size of the request or we splitted it
         // So we put it in the used list
-        assert(current_segment->size == bytes_to_alloc);
+        //assert(current_segment->size == bytes_to_alloc);
 
         linked_list_pop(&free_head, current_segment);
         linked_list_push(&used_head, current_segment);
