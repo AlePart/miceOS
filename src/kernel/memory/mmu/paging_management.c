@@ -8,8 +8,8 @@
 
 PAGE_DIR page_allocator_init(size_t high_mem_size)
 {
-  basic_allocator_initialize(0x00000000, high_mem_size);
-  PAGE_DIR ker_dir_addr=allocate_pages(PAGE_SIZE_4K * PAGE_SIZE_4K); // 16MB kernel reservation
+  basic_allocator_initialize((uint32_t*)0x00000001,512*1024*1024-1);
+  PAGE_DIR ker_dir_addr=allocate_pages(high_mem_size); // 16MB kernel reservation
 
   change_dir_tbl(ker_dir_addr);
   uint32_t val = 0x80000001;
@@ -50,10 +50,10 @@ PAGE_DIR allocate_pages(size_t size)
    
   PAGE_DIR page_directory =(PAGE_DIR)basic_allocator_alloc(PAGE_SIZE_4K); //allocate 4k for directory
   //TODO MEMSET instead for
-  for(uint32_t i=0; i< PAGE_SIZE_4K; i++)
+  /*for(uint32_t i=0; i< PAGE_SIZE_4K; i++)
   {
     ((uint8_t**)(page_directory))[i]=0;
-  }
+  }*/
 
   PAGE_TBL page_tbl;
   if(0 == need_pages % PAGE_TBL_SIZE) // allocate 4k aligned space

@@ -50,7 +50,7 @@ static size_t linked_list_size(Segment *head)
     return result;
 }
 
-static void* segment_data_begin_address(Segment* segment) {
+static uint8_t* segment_data_begin_address(Segment* segment) {
     return (uint8_t*)segment + sizeof(Segment);
 }
 
