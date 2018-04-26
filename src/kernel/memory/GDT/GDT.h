@@ -1,7 +1,8 @@
 #ifndef GDT_H
 #define GDT_H
-#include "GDT_types.h"
 
+#include "GDT_types.h"
+#include <stddef.h>
 
 #ifdef __SEGMENT_ALLOCATOR
 void GDT_create_descriptor(uint32_t base, uint32_t limit, uint16_t flag, uint64_t & descriptor);

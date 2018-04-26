@@ -1,5 +1,7 @@
 #ifndef GDT_TYPES_H
 #define GDT_TYPES_H
+
+#include <stdint.h>
 #define SEG_DESCTYPE(x)  ((x) << 0x04) // Descriptor type (0 for system, 1 for code/data)
 #define SEG_PRES(x)      ((x) << 0x07) // Present
 #define SEG_SAVL(x)      ((x) << 0x0C) // Available for system use
@@ -43,7 +45,7 @@
 
 
 #define MAX_DESCRIPTORS 8192
-struct gdt {
+struct gdtstr {
         uint32_t address;
         uint16_t size;
 } __attribute__((packed));
