@@ -1,10 +1,12 @@
 .data
-.text
-.global .reload_data
+
+.section .text
+.global reload_data
 .global .reloadCS
 
+.type reload_data, @function
 
-.reload_data:
+reload_data:
 push %ax
 mov $0x10, %ax
 mov %ax, %ds
