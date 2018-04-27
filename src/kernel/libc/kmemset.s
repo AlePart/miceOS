@@ -10,18 +10,16 @@ kmemset:
 
     pushl	%ebp		# Salva il puntatore al fram
     movl	%esp,%ebp	# punta al nuovo frame
-    mov         %ebp,%eax
-    add         4,%eax
-    mov         %eax,%ebx
-    add         4,%eax
-    mov         %eax,%edx
-    add         4,%eax
-    mov         %eax,%ecx
-
-
-    cld
-    mov (%ebx), %esi
-    mov (%eax), %edi
-    rep movsb
+    mov         0x10(%ebp),%ecx
+    #cld
+    lea 0x0c(%ebp), %esi
+    lea (%eax), %edi
+    #rep movsb
+loop:
+    mov %esi,%edi
+    add 0x04, %edi
+    cmp 0x00, %ecx
+    dec %ecx
+    jnz loop
     popl %ebp
     ret
