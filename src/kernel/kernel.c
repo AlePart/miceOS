@@ -6,7 +6,8 @@
 #include "memory/mmu/paging_management.h"
 #include "memory/GDT/GDT.h"
 
-extern void kmemset(uint32_t*, uint8_t, size_t);
+extern void kmemcpy(void*,void*,size_t);
+extern void kmemset(void*, uint8_t, size_t);
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -201,8 +202,13 @@ char getchar() {
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
     __asm__("nop");
-    uint32_t test=0x00000001;
-    kmemset(&test,0x55,sizeof(test));
+    uint32_t test[5];
+    uint32_t test2[5];
+    kmemset(&test,0xFF,sizeof(test));
+
+
+    kmemcpy(test2,test,sizeof(test));
+
     GDT_init(1024*1024*1024 * 4);
     GDT_update();
     basic_allocator_initialize(1024*1024*1,1024*1024*1024 *3);
