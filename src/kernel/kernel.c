@@ -201,8 +201,8 @@ char getchar() {
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
     __asm__("nop");
-    uint32_t test=0xffffffff;
-    kmemset(&test,5,sizeof(test));
+    uint32_t test=0x00000001;
+    kmemset(&test,0x55,sizeof(test));
     GDT_init(1024*1024*1024 * 4);
     GDT_update();
     basic_allocator_initialize(1024*1024*1,1024*1024*1024 *3);

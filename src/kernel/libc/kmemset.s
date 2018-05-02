@@ -8,18 +8,23 @@
 
 kmemset:
 
-    pushl	%ebp		# Salva il puntatore al fram
-    movl	%esp,%ebp	# punta al nuovo frame
-    mov         0x10(%ebp),%ecx
-    #cld
-    lea 0x0c(%ebp), %esi
-    lea (%eax), %edi
-    #rep movsb
-loop:
-    mov %esi,%edi
-    add 0x04, %edi
-    cmp 0x00, %ecx
-    dec %ecx
-    jnz loop
+    pushl	%ebp		# Save old frame ptr
+    movl	%esp,%ebp	# punta al nuovo framestack is saved on base pointer
+    cld                         # clear direction esi and edi increment
+    mov 0x10(%ebp), %ecx        # getting counter
+    lea 0x0c(%ebp), %esi        # getting source
+    lea (%eax), %edi            # getting dest
+    cmp %ecx,%ecx               # reset ZF
+
+
+copy:
+    movsb                       # copy 1 byte
+    dec %esi                    # return to the symbol
+    cmp 0x01, %ecx              # if last copy
+    dec %ecx                    # counter --
+    jnz copy                    # copy another byte
     popl %ebp
     ret
+
+
+
