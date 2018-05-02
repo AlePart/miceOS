@@ -13,7 +13,7 @@ kmemset:
     cld                         # clear direction esi and edi increment
     mov 0x10(%ebp), %ecx        # getting counter
     lea 0x0c(%ebp), %esi        # getting source
-    lea (%eax), %edi            # getting dest
+    mov 0x08(%ebp), %edi        # getting dest
     cmp %ecx,%ecx               # reset ZF
 
 

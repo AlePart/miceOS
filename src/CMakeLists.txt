@@ -4,6 +4,7 @@ set(TARGET_SOURCES
     boot/boot.s
     kernel/memory/GDT/segment_reloading.s
     kernel/libc/kmemset.s
+    kernel/libc/kmemcpy.s
     kernel/kernel.c
     kernel/memory/allocator/basic_allocator.c
     kernel/memory/allocator/static_allocator.c
