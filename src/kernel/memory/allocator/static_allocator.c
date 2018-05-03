@@ -1,31 +1,52 @@
 #include "static_allocator.h"
 
+#include "../../libc/libc.h"
+
+#ifndef STATIC_ALLOC_DICTIONARY_INITAL_PAGES
+#define STATIC_ALLOC_DICTIONARY_INITAL_PAGES (16)
+#endif
+
+#define SPACE_ELEMENT_FREE (1<<0)
+#define SPACE_ELEMENTS_ARRAY (1<<1)
+#define SPACE_DICTIONARY_LIST (1<<1)
+#define SPACE_ELEMENT_ALLOCATED (1<<2)
+
+
+#define STATIC_DICTIONARY_ELEMENTS  ((4096 / sizeof(STATIC_ALLOC_DICTIONARY_ELEMENT)) * STATIC_ALLOC_DICTIONARY_INITAL_PAGES)
 
 typedef struct
 {
     uint32_t* addr_start;
     uint32_t* addr_end;
-    struct STATIC_ALLOC_DICTIONARY* next;
-}STATIC_ALLOC_DICTIONARY;
+    uint16_t type;
 
-static STATIC_ALLOC_DICTIONARY* _base = NULL;
-static uint32_t* lastAddress;
-static uint32_t* startAddress;
+}STATIC_ALLOC_DICTIONARY_ELEMENT;
+typedef struct
+{
+    struct DICTIONARY_LIST* next;
+    struct DICTIONARY_LIST* prev;
+}DICTIONARY_LIST;
 
+static size_t STATIC_DICTIONARY_ELEMENT_FOR_PAGE = (4096 / sizeof(STATIC_ALLOC_DICTIONARY_ELEMENT));
+
+static STATIC_ALLOC_DICTIONARY_ELEMENT* base_dictionary;
+
+
+static STATIC_ALLOC_DICTIONARY_ELEMENT*  last_element;
 
 void static_allocator_init(uint32_t base_address, size_t mem_size)
 {
-    lastAddress= (uint32_t*) (((uint8_t*)((base_address& 0xFFFFF000 )) + mem_size));
-    startAddress = (uint32_t*)(base_address& 0xFFFFF000 );
+    base_dictionary = (uint32_t*)(base_address & 0x00000FFF);
+    kmemset(base_dictionary, 0x00, sizeof(base_dictionary));
+    base_dictionary[0].addr_start = base_dictionary;
+    base_dictionary[0].addr_end = base_dictionary + STATIC_DICTIONARY_ELEMENTS;
+    base_dictionary[0].type |= SPACE_ELEMENTS_ARRAY;
+    last_element = &base_dictionary[STATIC_DICTIONARY_ELEMENTS - 1];
+
+
 }
 
-void static_allocator_alloc(size_t size)
+ALLOCATION_RESULT static_allocator_alloc(size_t size)
 {
-
-    if(NULL == _base)
-    {
-        _base = startAddress;
-    }
-
-
+    return ALLOCATION_OK;
 }
