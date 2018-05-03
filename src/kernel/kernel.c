@@ -8,6 +8,7 @@
 
 extern void kmemcpy(void*,void*,size_t);
 extern void kmemset(void*, uint8_t, size_t);
+extern uint32_t kmemcmp(void*, void*, size_t);
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -199,15 +200,21 @@ char getchar() {
 
     return getScancode(); // must be pasrsed with scancode
 }
+
+
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
     __asm__("nop");
-    uint32_t test[5];
-    uint32_t test2[5];
+    uint8_t test[5];
+    uint8_t test2[5];
+    uint32_t cmp = 0;
     kmemset(&test,0xFF,sizeof(test));
 
-
+    cmp = kmemcmp(test2,test,sizeof(test));
     kmemcpy(test2,test,sizeof(test));
+    cmp = kmemcmp(test,test2,sizeof(test));
+    test2[3]=5;
+    cmp = kmemcmp(test,test2,sizeof(test));
 
     GDT_init(1024*1024*1024 * 4);
     GDT_update();
@@ -230,6 +237,7 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     /* Initialize terminal interface */
     terminal_initialize();
     terminal_writestring("Hello, kernel World!\n");
+
 
 
 }
