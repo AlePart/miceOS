@@ -36,7 +36,7 @@ static STATIC_ALLOC_DICTIONARY_ELEMENT*  last_element;
 
 void static_allocator_init(uint32_t base_address, size_t mem_size)
 {
-    base_dictionary = (uint32_t*)(base_address & 0x00000FFF);
+    base_dictionary = (uint32_t*)(base_address & 0xFFFFF000);
     kmemset(base_dictionary, 0x00, sizeof(base_dictionary));
     base_dictionary[0].addr_start = base_dictionary;
     base_dictionary[0].addr_end = base_dictionary + STATIC_DICTIONARY_ELEMENTS;
