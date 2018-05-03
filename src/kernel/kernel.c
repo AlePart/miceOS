@@ -6,9 +6,7 @@
 #include "memory/mmu/paging_management.h"
 #include "memory/GDT/GDT.h"
 
-extern void kmemcpy(void*,void*,size_t);
-extern void kmemset(void*, uint8_t, size_t);
-extern uint32_t kmemcmp(void*, void*, size_t);
+#include "libc/libc.h"
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -79,10 +77,7 @@ char * itoa( int value, char * str, int base )
     }
     return rc;
 }
-void memcpy_i386(void* dest, void* src, size_t size)
-{
-    __asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (size)  );
-}
+
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 
@@ -115,7 +110,8 @@ void terminal_setcolor(uint8_t color)
 
 void terminal_scroll() 
 {
-    memcpy_i386((void*)terminal_buffer,(void*)(terminal_buffer + VGA_WIDTH), VGA_WIDTH*(VGA_HEIGHT-1) );
+
+    kmemcpy((void*)terminal_buffer,(void*)(terminal_buffer + VGA_WIDTH), VGA_WIDTH*(VGA_HEIGHT-1));
     terminal_row--;
 } 
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) 

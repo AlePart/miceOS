@@ -15,7 +15,8 @@ set(TARGET_SOURCES
 
 set(TARGET_HEADERS
     kernel/memory/allocator/basic_allocator.h
-     kernel/memory/allocator/static_allocator.h
+    kernel/memory/allocator/static_allocator.h
+    kernel/libc/libc.h
     kernel/memory/mmu/paging_management.h
     kernel/memory/GDT/GDT.h
 )
