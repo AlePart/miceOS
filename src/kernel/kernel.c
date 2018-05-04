@@ -215,10 +215,25 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     GDT_init(1024*1024*1024 * 4);
     GDT_update();
 
+    static_allocator_init(16*1024*1024);
+    uint32_t* a1;
+    uint32_t* a2;
+    uint32_t* a3;
+    static_allocator_alloc(1024*1024,&a1);
+    static_allocator_alloc(4*1024*1024,&a2);
+    static_allocator_alloc(16*1024*1024,&a3);
+
+    static_allocator_free(a2);
+    static_allocator_alloc(32*1024*1024,&a2);
+    static_allocator_free(a1);
+    static_allocator_alloc(16*1024,&a1);
+
 
     /* Initialize terminal interface */
     terminal_initialize();
+
     terminal_writestring("Hello, kernel World!\n");
+
 
 
 
