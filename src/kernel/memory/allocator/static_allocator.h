@@ -10,7 +10,7 @@ typedef enum
     ALLOCATION_UNABLE_TO_ALLOC
 }ALLOCATION_RESULT;
 
-void static_allocator_init(uint32_t base_address);
+void static_allocator_init(uint32_t *base_address);
 ALLOCATION_RESULT static_allocator_alloc(size_t size, void **start_addr);
 
 
