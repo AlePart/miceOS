@@ -13,8 +13,8 @@ typedef enum
 }ALLOCATOR_RESULT;
 
 void static_allocator_init(uint32_t *base_address);
-ALLOCATOR_RESULT static_allocator_alloc(size_t size, void **start_addr);
-ALLOCATOR_RESULT static_allocator_free(void* addr);
+ALLOCATOR_RESULT static_allocator_alloc(size_t size, uint8_t *start_addr[]);
+ALLOCATOR_RESULT static_allocator_free(uint8_t *addr[], size_t pages_num);
 
 
 

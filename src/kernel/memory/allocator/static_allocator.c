@@ -2,126 +2,87 @@
 
 #include "../../libc/libc.h"
 
-#ifndef STATIC_ALLOC_DICTIONARY_INITAL_PAGES
-#define STATIC_ALLOC_DICTIONARY_INITAL_PAGES (16)
-#endif
+#define TOTAL_PAGES ( 1024 * 1024 )
+#define PAGE_SHIFT (12)
 
-
-#define STATIC_DICTIONARY_ELEMENTS  (1024*1024)
-
+#define PAGE_ALLOCATED ( 1 << 0 )
+#define PAGE_RESERVED (1 << 1 )
 typedef struct
 {
-    uint8_t* addr_start;
-    uint8_t* addr_end;
+    uint8_t* page_phy_address;
+    uint32_t mask;
+}ALLOCATOR_ALLOCATED_PAGES;
 
-}STATIC_ALLOC_DICTIONARY_ELEMENT;
-
-
-
-static STATIC_ALLOC_DICTIONARY_ELEMENT* base_dictionary;
-static const STATIC_ALLOC_DICTIONARY_ELEMENT* last_element;
-
-
+ALLOCATOR_ALLOCATED_PAGES* pages;
+uint32_t page_offset;
 void static_allocator_init(uint32_t* base_address)
 {
-    base_dictionary = (STATIC_ALLOC_DICTIONARY_ELEMENT*)base_address;
-    kmemset((void*)base_dictionary,0x00, STATIC_DICTIONARY_ELEMENTS*sizeof(STATIC_ALLOC_DICTIONARY_ELEMENT));
-    base_dictionary[0].addr_start=(uint8_t*)base_address;
-    base_dictionary[0].addr_end= (uint8_t*)(((uint32_t)base_address) + STATIC_DICTIONARY_ELEMENTS*sizeof(STATIC_ALLOC_DICTIONARY_ELEMENT)) -1;
-    last_element = &base_dictionary[ (STATIC_DICTIONARY_ELEMENTS*sizeof(STATIC_ALLOC_DICTIONARY_ELEMENT)) - 1];
-}
-
-STATIC_ALLOC_DICTIONARY_ELEMENT* search_allocation_present(uint8_t* addr, size_t size) // find if an address is just allocated
-{
-    STATIC_ALLOC_DICTIONARY_ELEMENT* el = &base_dictionary[0];
-    uint8_t* addr_end = addr+size - 1;
-    while( el != last_element )
+    pages = (ALLOCATOR_ALLOCATED_PAGES*)(((uint32_t)base_address) & 0xFFFFF000);
+    page_offset = (uint32_t)(((uint32_t)base_address & 0xFFFFF000)>> PAGE_SHIFT);
+    kmemset(pages,0x00,sizeof(ALLOCATOR_ALLOCATED_PAGES)*TOTAL_PAGES);
+    for(uint32_t i = 0; i< TOTAL_PAGES; i++)
     {
-        if(el->addr_end = NULL && el->addr_start == NULL)
+        pages[i].page_phy_address= (uint8_t*)(((uint32_t)base_address & 0xFFFFF000) + (i << PAGE_SHIFT));
+        if(i < ((sizeof(ALLOCATOR_ALLOCATED_PAGES)*TOTAL_PAGES) >> PAGE_SHIFT))
         {
-            continue;
-        }
-        if( ( (el->addr_start < addr && el->addr_end < addr) ||
-              (el->addr_start > addr && el->addr_end > addr)) &&
-                ((  (el->addr_start < addr_end && el->addr_end < addr_end) ||
-                    (el->addr_start > addr_end && el->addr_end > addr_end))) )
-        {
-            el++; // element not found
-        }
-        else
-        {
-            return el; //element found
+            pages[i].mask |= PAGE_ALLOCATED;
         }
     }
-
-
-    return NULL;
 
 }
 
-STATIC_ALLOC_DICTIONARY_ELEMENT* search_allocation_space(size_t size)  // search space
+ALLOCATOR_ALLOCATED_PAGES* static_allocator_find_pages(uint8_t* addr)
 {
-    STATIC_ALLOC_DICTIONARY_ELEMENT* el = &base_dictionary[0];
-    uint8_t* suggested_addr = NULL;
-    while(el != last_element)
+
+}
+
+ALLOCATOR_RESULT static_allocator_alloc(size_t size, uint8_t* start_addr[])
+{
+
+    uint32_t need_pages = size >> PAGE_SHIFT;
+    uint32_t cnt = 0;
+    for(uint32_t i =0 ; i<TOTAL_PAGES; i++)
     {
-        if(NULL == suggested_addr && el->addr_end != 0)
+        if( 0 == (pages[i].mask & PAGE_ALLOCATED))
         {
-            suggested_addr = el->addr_end+1;
-            if(NULL !=search_allocation_present(suggested_addr, size) )
-            {
-                suggested_addr = NULL;
-            }
-            else
-            {
-                break;
-            }
+            start_addr[cnt++]=(void*)pages[i].page_phy_address;
+            pages[i].mask |= PAGE_RESERVED;
+            need_pages--;
         }
-        el++;
+        if(0 == need_pages)
+        {
+            break;
+        }
     }
-
-    // getting free descriptor
-    el = &base_dictionary[0];
-    while(el->addr_start != NULL)
+    if(0 != need_pages)
     {
-        el++;
-    }
-
-    if(NULL == suggested_addr)
-    {
-        el = NULL;
-
+        for(uint32_t i=0; i< (size >> PAGE_SHIFT) - need_pages; i++)
+        {
+            (pages[(((uint32_t)(start_addr[i])) >> PAGE_SHIFT) - page_offset]).mask &= ~PAGE_RESERVED;
+        }
+        return ALLOCATION_UNABLE_TO_ALLOC;
     }
     else
     {
-        el->addr_start= suggested_addr;
-        el->addr_end= el->addr_start+size - 1;
+        for(uint32_t i=0; i< (size >> PAGE_SHIFT) - need_pages; i++)
+        {
+            (pages[(((uint32_t)(start_addr[i])) >> PAGE_SHIFT) - page_offset]).mask &= ~PAGE_RESERVED;
+            (pages[(((uint32_t)(start_addr[i])) >> PAGE_SHIFT) - page_offset]).mask |= PAGE_ALLOCATED;
+        }
     }
-    return el;
-}
-
-ALLOCATOR_RESULT static_allocator_alloc(size_t size, void** start_addr)
-{
-    STATIC_ALLOC_DICTIONARY_ELEMENT* el = search_allocation_space(size);
-    if(el == 0)
-    {
-        return ALLOCATION_UNABLE_TO_ALLOC;
-    }
-    *start_addr = el->addr_start;
-
     return ALLOCATION_OK;
 }
 
 
-ALLOCATOR_RESULT static_allocator_free(void* addr)
+ALLOCATOR_RESULT static_allocator_free(uint8_t* addr[], size_t pages_num)
 {
-    STATIC_ALLOC_DICTIONARY_ELEMENT* el =search_allocation_present(addr,0);
-    if(el != NULL)
+    ALLOCATOR_ALLOCATED_PAGES* current[pages_num];
+    for(uint32_t i=0; i< pages_num; i++)
     {
-        el->addr_start = NULL;
-        el->addr_end = NULL;
-        return ALLOCATION_FREE_OK;
+        ((ALLOCATOR_ALLOCATED_PAGES*)(&(pages[(((uint32_t)addr[i]) >> PAGE_SHIFT) - page_offset])))->mask &= ~PAGE_ALLOCATED;
+
+        addr[i]=NULL;
     }
-    return ALLOCATION_UNABLE_TO_FREE;
+    return ALLOCATION_OK;
 
 }

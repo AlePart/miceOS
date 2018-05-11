@@ -216,18 +216,19 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     GDT_update();
 
     static_allocator_init(16*1024*1024);
-    uint32_t* a1;
-    uint32_t* a2;
-    uint32_t* a3;
-    static_allocator_alloc(1024*1024,&a1);
-    static_allocator_alloc(4*1024*1024,&a2);
-    static_allocator_alloc(16*1024*1024,&a3);
 
-    static_allocator_free(a2);
-    static_allocator_alloc(32*1024*1024,&a2);
-    static_allocator_free(a1);
-    static_allocator_alloc(16*1024,&a1);
+    uint32_t* a2[1024*1024*16 / 4096];
+    uint32_t* a3[1024*1024*10 / 4096];
+    uint32_t* a1[1024 * 1024/ 4096];
+    uint32_t* a4[3*4096/ 4096];
+    uint32_t* a5[1024*1024/ 4096];
+    static_allocator_alloc(1024 * 1024,a1);
+    static_allocator_alloc(1024*1024*16,a2);
+    static_allocator_alloc(1024*1024*10,a3);
+    static_allocator_free(a1, 1024*1024/ 4096);
 
+    static_allocator_alloc(4096 * 3,a4);
+    static_allocator_alloc(1024 * 1024,a5);
 
     /* Initialize terminal interface */
     terminal_initialize();
