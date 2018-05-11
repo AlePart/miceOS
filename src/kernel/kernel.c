@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "memory/allocator/basic_allocator.h"
+#include "memory/allocator/static_allocator.h"
 #include "memory/mmu/paging_management.h"
 #include "memory/GDT/GDT.h"
 
@@ -214,25 +214,29 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 
     GDT_init(1024*1024*1024 * 4);
     GDT_update();
-    basic_allocator_initialize(1024*1024*1,1024*1024*1024 *3);
-    uint32_t* add1 = (uint32_t*)basic_allocator_alloc(1024*4);
-    uint32_t* add2 = (uint32_t*)basic_allocator_alloc(1024*4);
-    uint32_t* add3 = (uint32_t*)basic_allocator_alloc(1024*4);
-    uint32_t* add4 = (uint32_t*)basic_allocator_alloc(1024*4);
-    uint32_t* add5 = (uint32_t*)basic_allocator_alloc(1024*4);
-    uint32_t* add6 = (uint32_t*)basic_allocator_alloc(1024*4);
-    basic_allocator_free(add1);
-    basic_allocator_free(add2);
-    basic_allocator_free(add3);
-    basic_allocator_free(add4);
-    basic_allocator_free(add5);
-    basic_allocator_free(add6);
-    /*
-    PAGE_DIR dir = page_allocator_init(0x1000000);
-    PAGE_DIR d = allocate_pages(1024*1024*30);*/
+
+    static_allocator_init(16*1024*1024);
+
+    uint32_t* a2[1024*1024*16 / 4096];
+    uint32_t* a3[1024*1024*10 / 4096];
+    uint32_t* a1[1024 * 1024/ 4096];
+    uint32_t* a4[3*4096/ 4096];
+    uint32_t* a5[1024*1024/ 4096];
+    static_allocator_alloc(1024 * 1024,a1);
+    static_allocator_alloc(1024*1024*16,a2);
+    static_allocator_alloc(1024*1024*10,a3);
+    static_allocator_free(a1, 1024*1024/ 4096);
+
+    static_allocator_alloc(4096 * 3,a4);
+    static_allocator_alloc(1024 * 1024,a5);
+
     /* Initialize terminal interface */
     terminal_initialize();
+
     terminal_writestring("Hello, kernel World!\n");
+
+
+
 
 
 
