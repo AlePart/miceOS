@@ -1,95 +1,106 @@
 
 #include "paging_management.h"
-#include "../allocator/basic_allocator.h"
+#include "../allocator/static_allocator.h"
+#include "../../libc/libc.h"
+#define DIRECTORY_SHIFT (10)
 
 
 
 
-
-PAGE_DIR page_allocator_init(size_t high_mem_size)
+void page_allocator_init(size_t high_mem_size)
 {
-  basic_allocator_initialize((uint32_t*)(1024*1024*16),512*1024*1024);
-  PAGE_DIR ker_dir_addr=allocate_pages(high_mem_size); // 16MB kernel reservation
+    static_allocator_init(high_mem_size & 0xFFFFF000);
 
-  change_dir_tbl(ker_dir_addr);
-  uint32_t val = 0x80000001;
-  asm("mov %0, %%cr0":"=r"(val));
-  return ker_dir_addr;
+    change_dir_tbl(high_mem_size & 0xFFFFF00);
+    uint32_t val = 0x80000001;
+    asm("mov %0, %%cr0":"=r"(val));
 }
 
-void free_pages(PAGE_DIR directory)
+void page_allocator_free_pages(PAGE_DIR directory)
 {
-  for(uint32_t i=0; i< PAGE_DIR_SIZE; i++)
-  {
-    PAGE_TBL pg = (PAGE_TBL)directory[i];
-    if(pg != 0)
+}
+
+
+void page_allocator_allocate_page(void* virt_addr, uint8_t** directory)
+{
+
+    volatile uint8_t* pg_tbl_addr[1];
+    volatile uint8_t* pg_addr[1];
+    volatile uint8_t* dir_addr[1];
+    if (ALLOCATION_OK != static_allocator_alloc(4096,pg_addr))
     {
-      for(uint32_t j=0; i< PAGE_TBL_SIZE; j++)
-      {
-        if(pg[j] != 0)
+        return NULL;
+    }
+
+    if(ALLOCATION_OK != static_allocator_alloc(4096, dir_addr))
+    {
+        static_allocator_free(pg_addr, 1);
+        return NULL;
+    }
+    if( ALLOCATION_OK != static_allocator_alloc(4096, pg_tbl_addr))
+    {
+        static_allocator_free(pg_addr, 1);
+        static_allocator_free(dir_addr,1);
+        return NULL;
+    }
+   dir_addr[((uint32_t)virt_addr & 0xFFC00000) >> (PAGE_SHIFT + DIRECTORY_SHIFT)] = pg_tbl_addr[0];
+   pg_tbl_addr[((uint32_t)virt_addr & 0xFFC00000) >> (PAGE_SHIFT + DIRECTORY_SHIFT)] = dir_addr[0];
+   *directory = dir_addr[0];
+   /* ((*directory)[((uint32_t)virt_addr & 0xFFC00000) >> (PAGE_SHIFT + DIRECTORY_SHIFT)]) = pgTbl[1];
+    pgTbl[((uint32_t)virt_addr & 0x003FF000) >> PAGE_SHIFT] = (pg_addr[0]);*/
+   /* pg_tbl[0][((uint32_t)virt_addr & 0x003FF000) >> PAGE_SHIFT]= (uint8_t*)pg_addr[0];
+    (directory)[0][((uint32_t)virt_addr & 0xFFC00000) >> (PAGE_SHIFT + DIRECTORY_SHIFT)] = (uint8_t*)pg_tbl[0];*/
+
+}
+
+PAGE_APPEND_RESULT page_allocator_append_page(PAGE_DIR dir ,void *virt_addr)
+{
+    volatile uint8_t* pg_addr[1];
+    volatile uint8_t* pgTbl = dir[((uint32_t)virt_addr & 0xFFC00000) >> (PAGE_SHIFT + DIRECTORY_SHIFT)];
+    if( pgTbl != NULL)
+    {
+
+        if(pgTbl[((uint32_t)virt_addr & 0x003FF000) >> PAGE_SHIFT] != NULL)
         {
-          basic_allocator_free((void*)pg[j]);
+            return APPEND_FAIL_ADDRESS_IN_USE;
         }
-        pg[j] = 0;
-      }
+        else
+        {
+            if (ALLOCATION_OK != static_allocator_alloc(4096,pg_addr))
+            {
+                return APPEND_FAIL;
+            }
+            else
+            {
+                pgTbl[((uint32_t)virt_addr & 0x003FF000) >> PAGE_SHIFT] = (pg_addr[0]);
+            }
+
+        }
     }
-    basic_allocator_free((void*)directory[i]);
-    directory[i] = 0;
-  }
-   basic_allocator_free((void*)directory);
-}
-
-PAGE_DIR allocate_pages(size_t size)
-{
-  uint32_t need_pages = size >> PAGE_SHIFT;
-  uint32_t need_dir = (1 + (size >> DIR_SHIFT));
-  if(0 != (size & MASK_PAGE_4K) )
-  {
-    need_pages++;
-  }
-   
-  PAGE_DIR page_directory =(PAGE_DIR)basic_allocator_alloc(PAGE_SIZE_4K); //allocate 4k for directory
-  //TODO MEMSET instead for
-  /*for(uint32_t i=0; i< PAGE_SIZE_4K; i++)
-  {
-    ((uint8_t**)(page_directory))[i]=0;
-  }*/
-
-  PAGE_TBL page_tbl;
-  if(0 == need_pages % PAGE_TBL_SIZE) // allocate 4k aligned space
-  {
-    page_tbl = (PAGE_TBL)basic_allocator_alloc(PAGE_SIZE_4K * (need_pages / PAGE_TBL_SIZE ));
-  }
-  else
-  {
-    page_tbl = (PAGE_TBL)basic_allocator_alloc(PAGE_SIZE_4K * (need_pages / PAGE_TBL_SIZE ) + 1);
-  }
-
-  for(uint32_t i =0 ; i < need_dir; i++)
-  {
-    uint32_t entry = (uint32_t)((page_directory)[i]);
-    entry = (uint32_t)(((uint8_t*)page_tbl) +  (i << PAGE_SIZE_4K)); // dir_entry[i] is the base pg tbl plus shifted index
-    entry &= (~PAGE_DESCRIPTOR_ENTRY_FLAG_MASK);
-    entry |= PAGE_PRESENT | PAGE_RW | PAGE_USER;
-    (page_directory)[i] = (uint32_t*)entry;
-    
-
-    for(uint16_t cnt =0 ; cnt < PAGE_TBL_SIZE ; cnt++)
+    else
     {
-      uint32_t entry = (uint32_t)((page_tbl)[cnt]);
-      entry = (uint32_t)basic_allocator_alloc(PAGE_SIZE_4K) ; // the real allocation
-      entry &= (~PAGE_DESCRIPTOR_ENTRY_FLAG_MASK);
-      entry |= PAGE_PRESENT | PAGE_RW | PAGE_USER;
-      (page_tbl)[cnt] = (uint32_t*)entry;
-    }
-  }
- 
-  return page_directory;
-}
 
+        if( ALLOCATION_OK != static_allocator_alloc(4096, pgTbl))
+        {
+            return APPEND_FAIL;
+        }
+        else
+        {
+            if (ALLOCATION_OK != static_allocator_alloc(4096,pg_addr))
+            {
+                static_allocator_free(pgTbl,4096);
+                return APPEND_FAIL;
+            }
+            else
+            {
+                pgTbl[((uint32_t)virt_addr & 0x003FF000) >> PAGE_SHIFT] = (pg_addr[0]);
+            }
+        }
+    }
+}
 static inline void change_dir_tbl(PAGE_DIR directory)
 {
-  asm("mov %0, %%cr3" : : "r"(directory) );
+    asm("mov %0, %%cr3" : : "r"(directory) );
 }
 
 

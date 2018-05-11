@@ -15,14 +15,22 @@
 #define PAGE_RW (1<<1)
 #define PAGE_USER (1<<2)
 #define MASK_PAGE_4K (0x00000FFF)
-typedef uint32_t** PAGE_DIR;
-typedef uint32_t** PAGE_TBL;
+typedef uint8_t** PAGE_DIR;
+typedef uint8_t** PAGE_TBL;
 
-PAGE_DIR page_allocator_init(size_t high_mem_size);
+typedef enum
+{
+    APPEND_OK,
+    APPEND_FAIL_ADDRESS_IN_USE,
+    APPEND_FAIL
+}PAGE_APPEND_RESULT;
+void page_allocator_init(size_t high_mem_size);
 
-void free_pages(PAGE_DIR directory);
+void  page_allocator_free_pages(PAGE_DIR directory);
 
-PAGE_DIR allocate_pages(size_t size);
+void page_allocator_allocate_page(void* virt_addr, uint8_t **directory);
+
+PAGE_APPEND_RESULT page_allocator_append_page(PAGE_DIR dir ,void *virt_addr);
 
 static inline void change_dir_tbl(PAGE_DIR directory);
 

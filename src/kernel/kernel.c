@@ -201,7 +201,7 @@ char getchar() {
 void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
 {
     __asm__("nop");
-    uint8_t test[5];
+   /* uint8_t test[5];
     uint8_t test2[5];
     uint32_t cmp = 0;
     kmemset(&test,0xFF,sizeof(test));
@@ -212,8 +212,7 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     test2[3]=5;
     cmp = kmemcmp(test,test2,sizeof(test));
 
-    GDT_init(1024*1024*1024 * 4);
-    GDT_update();
+
 
     static_allocator_init(16*1024*1024);
 
@@ -228,8 +227,17 @@ void kernel_main(/*multiboot_info_t* mbd, unsigned int magic*/)
     static_allocator_free(a1, 1024*1024/ 4096);
 
     static_allocator_alloc(4096 * 3,a4);
-    static_allocator_alloc(1024 * 1024,a5);
-
+    static_allocator_alloc(1024 * 1024,a5);*/
+    GDT_init(1024*1024*1024 * 4);
+    GDT_update();
+    page_allocator_init(16*1024*1024);
+    uint8_t* v1 = 0x00005000;
+    uint8_t* v2 = 0x00001000;
+    volatile uint8_t* d1[1024];
+    page_allocator_allocate_page((void*)v1, d1);
+    // TO FIX APPEND
+   /* page_allocator_append_page(d1,(void*)v2);
+    page_allocator_append_page(d1,(void*)v2);*/
     /* Initialize terminal interface */
     terminal_initialize();
 
